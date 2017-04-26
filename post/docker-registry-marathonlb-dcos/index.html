@@ -51,9 +51,9 @@
       </div>
 
       <article class="post-content">
-      
+      <p>This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.</p>
 
-<p>This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.</p>
+<p></p>
 
 <h3 id="prerequisites">Prerequisites</h3>
 
@@ -61,6 +61,7 @@
 <li>DC/OS cluster (version 1.8+) running on RHEL 7.2</li>
 <li>SSH access to all nodes with root privileges.</li>
 <li>DC/OS super user account.</li>
+<li>DC/OS CLI installed on your local machine and authenticated against the cluster.</li>
 </ul>
 
 <h3 id="planning">Planning</h3>
@@ -167,7 +168,11 @@ sudo systemctl restart docker
 <pre><code class="language-bash">dcos package install --options=mlbint.json marathon-lb --yes
 </code></pre>
 
-<p>Open the DC/OS web UI, login with super user account, and click on Services / shared / mlbint / Edit / Optional. Click on the URIs field and enter the web server URL/path to the registry.pem file <code>http://&lt;boot-ip&gt;:8085/registry.pem</code>. Click on &ldquo;Deploy Changes&rdquo;.</p>
+<p>Open the DC/OS web UI, login with super user account, and click on Services / shared / mlbint / Edit / Optional. Click on the URIs field and enter the web server URL/path to the registry.pem file <code>http://&lt;bootstrap-ip&gt;:8085/registry.pem</code>.</p>
+
+<p><img src="https://dobriak.github.io/images/mlbint1c.png" alt="MlbConfig1" /></p>
+
+<p>Click on <strong>&ldquo;Deploy Changes&rdquo;</strong>.</p>
 
 <h3 id="installing-docker-registry-service">Installing Docker registry service</h3>
 
@@ -303,12 +308,11 @@ sudo docker push mlbint.shared.marathon.mesos:10050/alpine
 
 <h3 id="bonus-1-using-this-setup-from-jenkins-running-on-dc-os">Bonus 1: Using this setup from Jenkins running on DC/OS</h3>
 
-<p>In Part 2 of this blog series, we will spin up a Jenkins instance and have it use our set up to build, push, and pull images from our private repository.</p>
+<p>In <a href="https://dobriak.github.io/post/jenkins-marathonlb-dcos/">Part 2</a> of this blog series, we will spin up a Jenkins instance and have it use our set up to build, push, and pull images from our private registry.</p>
 
 <h3 id="bonus-2-using-let-s-encrypt-certificates">Bonus 2: Using Let&rsquo;s Encrypt certificates</h3>
 
 <p>Let&rsquo;s Encrypt issues free TLS certificates with 90 days validity. In Part 3 of this blog series, we will see how we can automate this process to keep our private docker repo safe.</p>
-
       </article>
 
       <p class="post-meta">Tags:&nbsp;

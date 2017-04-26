@@ -15,8 +15,9 @@
       <pubDate>Mon, 24 Apr 2017 16:45:12 MST</pubDate>
       
       <guid>https://dobriak.github.io/post/docker-registry-marathonlb-dcos/</guid>
-      <description>This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.
-Prerequisites  DC/OS cluster (version 1.8+) running on RHEL 7.2 SSH access to all nodes with root privileges.</description>
+      <description>&lt;p&gt;This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
     </item>
     
   </channel>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Using Jenkins with a private docker registry on DC/OS - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="keywords" content="">
+  <link rel="canonical" href="https://dobriak.github.io/post/jenkins-marathonlb-dcos/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Using Jenkins with a private docker registry on DC/OS</h1>
+        <span class="post-meta">Apr 25, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>In this guide I will walk you through setting up your Jenkins instance to use the private docker registry we set up in the previous blog post.</p>
+
+<p></p>
+
+<p>For reference, Part 1 can be found here: <a href="https://dobriak.github.io/post/docker-registry-marathonlb-dcos/" title="First post of the blog series.">Secure private Docker registry on DC/OS</a>.</p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS cluster (version 1.8+) running on RHEL 7.2</li>
+<li>SSH access to all nodes with root privileges.</li>
+<li>DC/OS super user account.</li>
+<li>DC/OS CLI installed on your local machine and authenticated against the cluster.</li>
+<li>Private Docker registry configured as per <a href="https://dobriak.github.io/post/docker-registry-marathonlb-dcos/" title="First post of the blog series.">Part 1</a> of this blog post series.</li>
+</ul>
+
+<h3 id="planning">Planning</h3>
+
+<p>In this article I am planning to outline how to:
++ start a Jenkins instance on DC/OS and configure it to use our private docker registry to pull and push images.
++ introduce the registry TLS key to the base Jenkins slave image so we can sign our push and pull operations.
++ configure a sample Jenkins build job to illustrate the set up and usage of the above.
++ make use of the internal Docker registry available through our internal marathon-lb instance at <code>mlbint.shared.marathon.mesos:10050</code>.</p>
+
+<h3 id="start-jenkins">Start Jenkins</h3>
+
+<p>For any stateful service such as Jenkins, it is always a good idea to figure out where to place your storage beforehand.
+In my case, I have NFS mounts on all my private nodes in /mnt/nfs/jenkins. This way, I would not have to worry what may happen if the Jenkins process dies or gets relocated to a different node.
+So I will tell DC/OS to use that location for my Jenkins instance. From my machine I will issue the following commands:</p>
+
+<pre><code class="language-bash">cat &lt;&lt;EOF &gt;jenkins.json
+{
+    &quot;storage&quot;: {
+        &quot;host-volume&quot;: &quot;/mnt/nfs/jenkins&quot;
+    }
+}
+EOF
+dcos package install jenkins --options=jenkins.json --yes
+</code></pre>
+
+<p>Jenkins&rsquo; web UI should be accessible after couple of minutes. You can do that by clicking on the &ldquo;Open in new window&rdquo; icon right next to jenkins service listing in DC/OS web UI.</p>
+
+<h3 id="override-base-jenkins-slave-images">Override base Jenkins slave images</h3>
+
+<p>The default Jenkins set up on DC/OS contains a &ldquo;Cloud&rdquo; Mesos configuration. As a result, Jenkins is working directly with the underlying Mesos kernel to manage a pool of build slaves that will execute the build steps we define in our jobs.
+In other words, those build slaves are just service instances (Docker containers) that will be brought up or killed depending on what Jenkins is doing.</p>
+
+<h4 id="problem">Problem</h4>
+
+<p>Those build slaves do not know how to securely communicate with our private Docker registry out of the box.
+If we try to pull from or push an image to the private registry our build job will fail with <code>Get https://mlbint.shared.marathon.mesos:10050/v1/_ping: x509: certificate signed by unknown authority</code>.</p>
+
+<h4 id="solution">Solution</h4>
+
+<p>We will introduce our TLS certificate to the base Docker image used to spin up the build slaves.
+Said image is made available on DockerHub as <code>mesosphere/jenkins-dind</code> and can easily be altered and then used in place of the original in our build jobs. It is based on Alpine Linux and thus it is super light weight, has a package management we can leverage, and is very easy to work with.
+So our plan of action is to:</p>
+
+<ol>
+<li>create a Dockerfile that inherits from the latest release of the image (<code>0.5.0-alpine</code> as of this blog entry)</li>
+<li>add the TLS key, which, if you followed <a href="https://dobriak.github.io/post/docker-registry-marathonlb-dcos/" title="First post of the blog series.">Part 1</a>, would be available from a web server running on the bootstrap node</li>
+<li>push the resulting Docker image to our private registry so it can be used by Jenkins to instantiate build slaves</li>
+<li>configure Jenkins Cloud Set up to use that new image</li>
+</ol>
+
+<p>SSH into any private node and run the following script to accomplish steps 1 to 3:</p>
+
+<pre><code class="language-bash">#!/bin/bash
+BOOT_WEB_URL=&quot;http://&lt;bootstrap-ip&gt;:8085&quot;
+MLB_ALPINE=&quot;mlbint.shared.marathon.mesos:10050/jenkins-dind:0.5.0-alpine-mlb&quot;
+ALPINE_DIR=${HOME}/dnid-alpine
+mkdir -p ${ALPINE_DIR}
+pushd ${ALPINE_DIR}
+# Writing Dockerfile
+cat &lt;&lt;EOF &gt;Dockerfile
+FROM mesosphere/jenkins-dind:0.5.0-alpine
+RUN ln -s /usr/lib/jvm/default-jvm/bin/java /bin/java ; ln -s /usr/lib/jvm/default-jvm/bin/javac /bin/javac
+RUN apk -U add ca-certificates
+ADD domain.crt /usr/local/share/ca-certificates/mlbint.shared.marathon.mesos:10050.crt
+RUN update-ca-certificates
+EOF
+# Downloading domain.crt
+wget ${BOOT_WEB_URL}/domain.crt
+if [ ! -f domain.crt ]; then
+  echo &quot;domain.crt not found&quot;
+  exit 1
+fi
+# Building dind-alpine
+sudo docker build -t ${MLB_ALPINE} .
+sudo docker push ${MLB_ALPINE}
+popd
+echo &quot;Done.&quot;
+</code></pre>
+
+<p>You should now have the image published to your private Docker registry.</p>
+
+<p>Now for part 4:</p>
+
+<p>Open the Jenkins web UI and click on <strong>Manage Jenkins / Configure System</strong>. At end of the page, there should be a <strong>Cloud / Mesos Cloud section</strong>. Click on the <strong>&ldquo;Advanced&rdquo;</strong> button. That will show you how the default base slave build image is configured. Do not touch that. Instead, let&rsquo;s click on the <strong>&ldquo;Add&rdquo;</strong> button (bottom left) and create our own base image configuration.</p>
+
+<p>In this screen shot I have clicked on the <strong>&ldquo;Add&rdquo;</strong> button and altered most of the fields. I have chosen <em>&ldquo;borg&rdquo;</em> as my label, and this is the name we will use later on to tell our build job to only run on build slaves based on our modified image.</p>
+
+<p><img src="https://dobriak.github.io/images/slave1c.png" alt="SlaveConfig1" /></p>
+
+<p>We are not done yet. Click on the <strong>&ldquo;Advanced&hellip;&rdquo;</strong> button to configure the Docker Containerizer with all the specific details needed to pull our modified base image. The <strong>&ldquo;Docker Image&rdquo;</strong> box is too small to show the complete address, but I can imagine you already have figured out what the entry is going to look like: <code>mlbint.shared.marathon.mesos:10050/jenkins-dind:0.5.0-alpine-mlb</code></p>
+
+<p><img src="https://dobriak.github.io/images/slave2c.png" alt="SlaveConfig2" /></p>
+
+<p>Do not forget to click on the <strong>&ldquo;Save&rdquo;</strong> button at the very bottom of the page.</p>
+
+<h3 id="jenkins-job-to-illustrate-the-use-case">Jenkins job to illustrate the use case</h3>
+
+<p>Now let&rsquo;s see this new base image in action.</p>
+
+<p>In the Jenkins web UI, click on <strong>&ldquo;New Item&rdquo;</strong>, fill out an item name of your choosing, then click on <strong>&ldquo;Freestyle project&rdquo;</strong> and the on the <strong>&ldquo;OK&rdquo;</strong> button at the bottom of the screen.</p>
+
+<p>In the job configuration dialog, check the <strong>&ldquo;Restrict where this project can be run&rdquo;</strong> box and type the label you picked for your base image. In my example I entered <em>&ldquo;borg&rdquo;</em>, so this is what I am going to use here too.</p>
+
+<p>Under <strong>&ldquo;Source Code Management&rdquo;</strong>, click on the <strong>&ldquo;Git&rdquo;</strong> radio button and enter the following <strong>Repository URL</strong>: <code>https://github.com/mhausenblas/cicd-demo.git</code>. This is a simple CI/CD demo repository that contains a Dockerfile we are going to target for a build, then push to our private Docker registry.</p>
+
+<p>Under <strong>&ldquo;Build&rdquo;</strong>, click on the <strong>&ldquo;Add build step&rdquo;</strong> drop down menu and select <strong>&ldquo;Execute shell&rdquo;</strong>. Paste the following code in the <strong>&ldquo;Command&rdquo;</strong> text box that will show up:</p>
+
+<pre><code class="language-bash">IMAGE_NAME=&quot;mlbint.shared.marathon.mesos:10050/${JOB_NAME}:${GIT_COMMIT}&quot;
+docker build -t $IMAGE_NAME .
+docker push $IMAGE_NAME
+</code></pre>
+
+<p>Click on the <strong>&ldquo;Save&rdquo;</strong> button.</p>
+
+<p>You should now be able to run the build job that will effectively build a Docker image out of the contents of the Dockerfile from the <a href="https://github.com/mhausenblas/cicd-demo" title="mhausenblas/cicd-demo repository">mhausenblas/cicd-demo</a> github repository, then push it to our private docker registry. Be patient, as the first spin up of the new build slave will likely take a few minutes.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/marathon-lb">marathon-lb</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/docker">docker</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/registry">registry</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/ssl">ssl</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/jenkins">jenkins</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+
