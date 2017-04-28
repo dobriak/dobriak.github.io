@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Automating advanced DC/OS installation. - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="keywords" content="">
+  <link rel="canonical" href="https://dobriak.github.io/post/automated-advanced-dcos-installation/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Automating advanced DC/OS installation.</h1>
+        <span class="post-meta">Apr 27, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.</p>
+
+<p></p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>AWS account with permissions to spin up instances in EC2.</li>
+<li>Machine with the ability to run Bash scripts. The scripts are tested on Linux (Mac and Bash for Windows testing coming soon).</li>
+<li>PEM key that will allow us to SSH into our instances.</li>
+<li>Tmux</li>
+</ul>
+
+<h3 id="planning">Planning</h3>
+
+<ul>
+<li>Install DC/OS version 1.8.8 on RHEL 7.2 EC2 instances.</li>
+<li>Identify the stages of an advanced installation.</li>
+<li>Develop automation around the stages.</li>
+<li>Make our solution scalable.</li>
+</ul>
+
+<h3 id="aws-infrastructure-considerations">AWS Infrastructure Considerations</h3>
+
+<p>We will install our DC/OS cluster on AWS EC2. This post deals only with the infrastructure part of it, i.e. how to configure and stand up the cluster.</p>
+
+<p>EC2 instance size-wise, please consider the table below.</p>
+
+<table>
+<thead>
+<tr>
+<th align="right"></th>
+<th align="left">Minimal Install</th>
+<th align="left">Small Cluster</th>
+<th align="left">Recommended</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td align="right">Bootstrap</td>
+<td align="left">1 m3.large</td>
+<td align="left">1 m3.large</td>
+<td align="left">1 m3.large</td>
+</tr>
+
+<tr>
+<td align="right">Master</td>
+<td align="left">1 m3.xlarge</td>
+<td align="left">3 m3.xlarge</td>
+<td align="left">3 m2.2xlarge</td>
+</tr>
+
+<tr>
+<td align="right">Private</td>
+<td align="left">1 m3.2xlarge</td>
+<td align="left">3 m3.2xlarge</td>
+<td align="left">at least 5 r3.8xlarge</td>
+</tr>
+
+<tr>
+<td align="right">Public</td>
+<td align="left">1 m3.xlarge</td>
+<td align="left">1 m3.xlarge</td>
+<td align="left">2 r3.xlarge</td>
+</tr>
+</tbody>
+</table>
+
+<p>Either of the above combinations will work for our purpose. Pick a smaller one if you have budgeting concerns.</p>
+
+<p>Spin up all instances in EC2, making sure you configure the following:</p>
+
+<ul>
+<li>The AMI needs to be RHEL 7.2 (Search the AWS Market place for that string).</li>
+<li>Your VPC and a subnet that allows for automatic assignment of public IP addresses.</li>
+<li>Storage - at least 100GB root disk.</li>
+<li>Security group - place them all in a single security group that has the following enabled:
+
+<ul>
+<li>All TCP In/Out</li>
+<li>All UDP In/Out</li>
+<li>All ICPM</li>
+</ul></li>
+</ul>
+
+<p>This obviously is not a secured set up at all. We will work with it just to demonstrate the set up automation. <strong>Do not</strong> use this configuration for any of your environments, not even Development.</p>
+
+<p>Confirm that you can connect to any of your instances via SSH and your PEM key.</p>
+
+<p>Create a text file with some of the IP addresses of the EC2 instances you just created.Here I have included a small cluster sample one:</p>
+
+<p><code>cluster.conf</code></p>
+
+<pre><code class="language-bash">#AWS private IPs
+BOOTSTRAP=10.10.0.10
+MASTER1=10.10.0.20
+MASTER2=10.10.0.30
+MASTER3=10.10.0.40
+#AWS public IPs
+AWSNODESB=54.1.2.3
+AWSNODESM=&quot;54.1.2.4 54.1.2.5&quot;
+AWSNODESPRIV=&quot;54.1.2.6 54.1.2.7 54.1.2.8&quot;
+AWSNODESPUB=54.1.2.9
+AWSNODES=&quot;${AWSNODESB} ${AWSNODESM} ${AWSNODESPUB} ${AWSNODESPRIV}&quot;
+</code></pre>
+
+<p><strong>BOOTSTRAP, MASTER1 MASTER2 MASTER3</strong> hold the AWS EC2 private IP addresses of the corresponding nodes.</p>
+
+<p><strong>AWSNODES</strong>* hold the AWS EC2 public IP address of</p>
+
+<ul>
+<li>B - bootstrap node</li>
+<li>M - master node(s)</li>
+<li>PRIV - private node(s)</li>
+<li>PUB - public node(s).</li>
+</ul>
+
+<h3 id="dc-os-installation">DC/OS Installation</h3>
+
+<p>According to the official <a href="https://docs.mesosphere.com/1.8/administration/installing/">documentation</a>, there are 4 ways to stand up a DC/OS cluster:</p>
+
+<ul>
+<li>Local installer - using Vagrant you can spin a small cluster on your local machine. This is perfect for testing features in development or just getting a general idea of how the whole thing works. Major downside of this method is you can not suspend or pause your cluster, so if you have to close your laptop you will lose your cluster and you would have to destroy and up your VMs again.</li>
+<li>GUI installer - perfect for POCs, it allows for simplistic configuration and is a great choice for first time users.</li>
+<li>CLI installer - allows for full fledged configuration of every available option and guides you through each step, from preparation to verification of all prerequisites. Excellent choice for advanced system administrators who want to get good understanding of how it all works. Easy to automate and be used as a step in configuration management work flows. Best suited for small to medium size cluster installations.</li>
+<li>Advanced - gives you complete control of every aspect of the process and it can easily be automated to scale. Another major advantage of using this method is that it produces a maintainable DC/OS cluster.
+The only disadvantage it has is the fact that it requires advanced knowledge and careful planning of your cluster.</li>
+</ul>
+
+<p>We will make use of the advanced installation method and combine it with an opinionated approach to our goal.</p>
+
+<h4 id="system-and-software-requirements-for-all-nodes">System and Software Requirements for all nodes</h4>
+
+<p>Consult the <a href="https://docs.mesosphere.com/1.8/administration/installing/custom/system-requirements/">documentation</a> for the complete list and a detailed explanation for each item.</p>
+
+<p>For brevity, I am going to list the ones we are interested in here:</p>
+
+<ul>
+<li>firewalld disabled.</li>
+<li>Docker version 1.9.x to 1.11.x. This is important, DC/OS version 1.8.x will work <strong>only</strong> with those version of the Docker engine.</li>
+<li>OverlayFS storage driver.</li>
+<li>Password-less sudo enabled</li>
+<li>SELinux in Permissive or Disabled mode</li>
+<li><code>nogroup</code> group added</li>
+<li>file compression and network tooling packages installed</li>
+</ul>
+
+<p>Looking at those requirements we can see that we will have to reboot the machine in order for some of them to take effect (OverlayFS and SELinux mode for example).
+So, if we are to write a script that meets those requirements we would have to split it in 2 parts:</p>
+
+<ul>
+<li>one that installs prerequisites that require reboot</li>
+</ul>
+
+<p><code>prerequisites1.sh</code></p>
+
+<pre><code class="language-bash"># Enable OverlayFS
+sudo tee /etc/modules-load.d/overlay.conf &lt;&lt;-'EOF'
+overlay
+EOF
+# Disable SELinux
+sudo su -c &quot;sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config&quot;
+</code></pre>
+
+<ul>
+<li>one that installs the rest of the prerequisites</li>
+</ul>
+
+<p><code>prerequisites2.sh</code></p>
+
+<pre><code class="language-bash"># Install software prerequisites and tooling
+sudo yum install -y wget vim net-tools ipset telnet unzip
+sudo groupadd nogroup
+sudo su -c &quot;tee /etc/yum.repos.d/docker.repo &lt;&lt;- 'EOF'
+[dockerrepo]
+name=Docker Repository
+baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+enabled=1
+gpgcheck=1
+gpgkey=https://yum.dockerproject.org/gpg
+EOF&quot;
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo su -c &quot;tee /etc/systemd/system/docker.service.d/override.conf &lt;&lt;- 'EOF'
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay -H fd://
+EOF&quot;
+# Installing docker 1.11.2
+sudo yum install -y docker-engine-1.11.2
+sudo systemctl start docker
+sudo systemctl enable docker
+</code></pre>
+
+<h4 id="configuration-and-installer-binary-on-the-bootstrap-node">Configuration and installer binary on the bootstrap node</h4>
+
+<p>In similar fashion, here are the prerequisites for our bootstrap node:</p>
+
+<ul>
+<li>IP detection script - this script needs to be able to produce the IP (EC2 private) address.</li>
+<li>gencong/config.yaml - this is the most important part of the advanced installation. Many of the settings in here once deployed, can not be changed without upgrade or even re-deployment. Since we are doing this the opinionated way, I will introduce a general case, easy to tweak starting point that will be a fine choice for <sup>2</sup>&frasl;<sub>3</sub> of all use cases.</li>
+</ul>
+
+<p><code>bootstrap.sh</code></p>
+
+<pre><code class="language-bash">source cluster.conf
+IPDETECT=&quot;curl -fsSL http://169.254.169.254/latest/meta-data/local-ipv4&quot;
+IPDETECT_PUB=&quot;curl -fsSL https://ipinfo.io/ip&quot;
+BOOTSTRAP_PORT=9999
+SUPASSWORD=&quot;deleteme&quot;
+# Getting 1.8.8 installer
+wget https://downloads.dcos.io/dcos/stable/commit/602edc1b4da9364297d166d4857fc8ed7b0b65ca/dcos_generate_config.sh
+sudo systemctl stop firewalld &amp;&amp; sudo systemctl disable firewalld
+sudo docker pull nginx
+RESOLVER_IP=$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2)
+echo &quot;Using ${RESOLVER_IP} as resolver&quot;
+BOOTSTRAP_IP=$(${IPDETECT})
+mkdir genconf
+# IP Detect script
+cat &lt;&lt;EOF &gt;genconf/ip-detect
+#!/bin/bash
+set -o nounset -o errexit
+${IPDETECT}
+EOF
+# IP Detect public
+cat &lt;&lt;EOF &gt;genconf/ip-detect-public
+#!/bin/bash
+set -o nounset -o errexit
+${IPDETECT_PUB}
+EOF
+# Making it work with 1 or 3 master nodes
+EXTRA_MASTERS=&quot;&quot;
+if [ -n &quot;${MASTER2}&quot; ] &amp;&amp; [ -n &quot;${MASTER3}&quot; ]; then
+  EXTRA_MASTERS=&quot;
+- ${MASTER2}
+- ${MASTER3}
+&quot;
+fi
+# Writing config.yaml
+cat &lt;&lt;EOF &gt;genconf/config.yaml
+bootstrap_url: http://${BOOTSTRAP_IP}:${BOOTSTRAP_PORT}
+cluster_name: DCOS188
+exhibitor_storage_backend: static
+master_discovery: static
+telemetry_enabled: true
+security: permissive
+rexray_config_method: file
+rexray_config_filename: rexray.yaml
+ip_detect_public_filename: genconf/ip-detect-public
+master_list:
+- ${MASTER1}
+${EXTRA_MASTERS}
+resolvers:
+- ${RESOLVER_IP}
+superuser_username: bootstrapuser
+EOF
+# Writing rexray.yaml
+cat &lt;&lt;EOF &gt;genconf/rexray.yaml
+loglevel: info
+storageDrivers:
+  - ec2
+volume:
+  unmount:
+    ignoreusedcount: true
+EOF
+# Setting superuser password to ${SUPASSWORD}
+sudo bash dcos_generate_config.sh --set-superuser-password ${SUPASSWORD}
+# Generating binaries
+sudo bash dcos_generate_config.sh
+# Running nginx on http://${BOOTSTRAP_IP}:${BOOTSTRAP_PORT}
+sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v $PWD/genconf/serve:/usr/share/nginx/html:ro nginx
+</code></pre>
+
+<p>This script will:</p>
+
+<ul>
+<li>create the needed configuration files</li>
+<li>download the DC/OS installation binary</li>
+<li>generate unique binary packages to be used for installation of all the other components of the cluster</li>
+<li>start a web server that will offer said packages to all other nodes</li>
+</ul>
+
+<h4 id="nodes-installation">Nodes installation</h4>
+
+<p>The process for installing the DC/OS software on master, private, and public nodes is roughly the same:</p>
+
+<ul>
+<li>create a temporary directory on the node</li>
+<li>download a script file from the web server we started in the previous step</li>
+
+<li><p>run said script specifying what type of node you are installing. The choices are:</p>
+
+<ul>
+<li>master</li>
+<li>slave (private node)</li>
+<li>slave_public (public node)</li>
+</ul></li>
+</ul>
+
+<p><code>master.sh, private.sh, public.sh</code></p>
+
+<pre><code class="language-bash">source cluster.conf
+mkdir /tmp/dcos
+pushd /tmp/dcos
+wget http://${BOOTSTRAP}:9999/dcos_install.sh
+sudo bash dcos_install.sh &lt;node-type&gt;
+popd
+</code></pre>
+
+<h3 id="automating-the-whole-process">Automating the whole process</h3>
+
+<p>So far, I have presented you with small scripts and a configuration file that can be copied onto the corresponding nodes, and run in a particular order.</p>
+
+<p>This is what an automation work flow can look like in pseudo code:</p>
+
+<pre><code>copy cluster.conf, prerequisites1.sh, prerequisites2.sh -&gt; all-nodes
+copy bootstrap.sh -&gt; boostrap-node
+copy master.sh -&gt; all-master-nodes
+copy private.sh -&gt; all-private-nodes
+copy public.sh -&gt; all-public-nodes
+
+for node in all-nodes
+  ssh -&gt; node, run prerequisites1.sh
+
+print &quot;Hit Enter after rebooting all nodes in the AWS console&quot;
+wait-for-enter
+
+for node in all-nodes
+  ssh -&gt; node, run prerequisites2.sh
+
+ssh -&gt; bootstrap-node, run bootstrap.sh
+
+for node in all-master-nodes
+  ssh -&gt; node, run master.sh
+  sleep 1 minute
+for node in all-private-nodes
+  ssh -&gt; node, run private.sh
+for node in all-public-nodes
+  ssh -&gt; node, run public.sh
+</code></pre>
+
+<p>Implementing such a work flow is trivial and I will leave that to the reader.</p>
+
+<p>While simple and easy to work with, this is not scalable at all. All steps are run sequentially and the more nodes you add the longer it will take to install.</p>
+
+<p>To solve this problem, I decided to issue all SCP and SSH command execution operations in parallel. In order to preserve the basic order of steps, I also implemented a waiting process that will block until all operations of the same kind have finished, for example  wait until all master nodes have finished installing before starting the private nodes installation.</p>
+
+<p>The tool of my choice is the good ole&rsquo; terminal multiplexor <code>tmux</code>. It happens to have all you need to tackle such a task - it is trivial to start a bunch of long running processes in parallel and then check on their state and continue once they are done.</p>
+
+<p><code>dcos-parallel-install.sh</code></p>
+
+<pre><code class="language-bash">#!/bin/bash
+source cluster.conf
+AWSKEY=&quot;${HOME}/.ssh/ec2default.pem&quot;
+AWSUSER=&quot;ec2-user&quot;
+
+function parallel_ssh(){
+  local members=${1}
+  local command=${2}
+  tfile=$(mktemp)
+  echo &quot;Running ${tfile} on ${members}&quot;
+  cat &lt;&lt;EOF &gt;${tfile}
+#!/bin/bash
+exec &gt; ${tfile}.log.\$\$ 2&gt;&amp;1
+echo &quot;Processing member \${1}&quot;
+ssh -t -i ${AWSKEY} ${AWSUSER}@\${1} &quot;${command}&quot;
+EOF
+  chmod +x ${tfile}
+  for member in ${members}; do
+    if [ ! -z ${3} ]; then 
+      echo &quot;Sleeping for ${3}&quot;
+      sleep ${3}
+    fi
+    tmux new-window &quot;${tfile} ${member}&quot;
+  done
+}
+
+function parallel_scp(){
+  local members=${1}
+  local files=${2}
+
+  for member in ${members}; do
+    echo &quot;scp ${files} to ${member}&quot;
+    tmux new-window &quot;scp -i ${AWSKEY} ${files} ${AWSUSER}@${member}:&quot;
+  done
+}
+
+function wait_sessions() {
+  local max_wait=120
+  local interval=&quot;30s&quot;
+  if [ ! -z ${1} ]; then interval=${1}; fi
+  local wins=$(tmux list-sessions | cut -d' ' -f2)
+  while [ ! &quot;${wins}&quot; == &quot;1&quot; ]; do
+    sleep ${interval}
+    (( max_wait-- ))
+    wins=$(tmux list-sessions | cut -d' ' -f2)
+    echo &quot;Remaining tasks ${wins}&quot;
+    if [ ${max_wait} -le 0 ] ; then
+      echo &quot;Timeout waiting for all sessions to close.&quot;
+      tmux kill-server
+      exit 1
+    fi
+  done
+}
+
+# Main
+echo &quot;Starting tmux...&quot;
+tmux start-server
+tmux new-session -d -s tester
+echo &quot;Scanning node public keys for SSH auth ...&quot;
+for i in ${AWSNODES}; do
+  ssh-keygen -R ${i}
+  ssh-keyscan -H ${i} &gt;&gt; ${HOME}/.ssh/known_hosts
+done
+echo &quot;Making sure we can SSH to all nodes ...&quot;
+parallel_ssh &quot;${AWSNODES}&quot; &quot;ls -l&quot;
+wait_sessions &quot;5s&quot;
+echo &quot;Scp-ing scripts to nodes ...&quot;
+parallel_scp &quot;${AWSNODES}&quot; &quot;cluster.conf scripts/all-*&quot;
+parallel_scp &quot;${AWSNODESB}&quot; &quot;scripts/boot-03-bootstrap_cust.sh&quot;
+parallel_scp &quot;${AWSNODESM}&quot; &quot;scripts/master-*&quot;
+parallel_scp &quot;${AWSNODESPRIV}&quot; &quot;scripts/private-*&quot;
+parallel_scp &quot;${AWSNODESPUB}&quot; &quot;scripts/public-*&quot;
+wait_sessions &quot;5s&quot;
+echo &quot;Bootstraping all nodes, part 1&quot;
+parallel_ssh &quot;${AWSNODES}&quot; &quot;sudo /home/${AWSUSER}/all-01-bootstrap1.sh&quot;
+wait_sessions
+echo &quot;---------------------------------------&quot;
+echo &quot;Reboot from AWS console then hit Enter&quot;
+echo &quot;---------------------------------------&quot;
+read
+echo &quot;Making sure the nodes came back up&quot;
+parallel_ssh &quot;${AWSNODES}&quot; &quot;ls -l&quot;
+wait_sessions &quot;5s&quot;
+echo &quot;Bootstraping all nodes, part 2&quot;
+parallel_ssh &quot;${AWSNODES}&quot; &quot;sudo /home/${AWSUSER}/all-02-bootstrap2.sh&quot;
+wait_sessions
+echo &quot;Preparing DC/OS binaries ...&quot;
+parallel_ssh &quot;${AWSNODESB}&quot; &quot;sudo /home/${AWSUSER}/boot-03-bootstrap_cust.sh&quot;
+wait_sessions
+echo &quot;Installing master nodes ...&quot;
+parallel_ssh &quot;${AWSNODESM}&quot; &quot;sudo /home/${AWSUSER}/master-01-install.sh&quot; &quot;1m&quot;
+wait_sessions &quot;1m&quot;
+sleep 1m
+echo &quot;Installing private and public nodes ...&quot;
+parallel_ssh &quot;${AWSNODESPRIV}&quot; &quot;sudo /home/${AWSUSER}/private-02-install.sh&quot;
+parallel_ssh &quot;${AWSNODESPUB}&quot; &quot;sudo /home/${AWSUSER}/public-01-install.sh&quot;
+wait_sessions &quot;1m&quot;
+echo &quot;Shutting down tmux&quot;
+tmux kill-server
+echo &quot;Done&quot;
+</code></pre>
+
+<p>Furthermore, I decided to capture to a log file the output of all processes ran in parallel for ease of debugging in case something goes wrong. All remote ssh commands are run via a temporary script in /tmp/tmp.{random} and the STDOUT and STDERR are captured to /tmp/tmp.{random}.{process-id}.</p>
+
+<p>All code for this blog post can be found in my <a href="https://github.com/dobriak/dcos-parallel-install">github repository</a>.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/docker">docker</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/scripting">scripting</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/parallel">parallel</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

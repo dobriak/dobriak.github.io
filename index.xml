@@ -7,7 +7,18 @@
     <language>en-us</language>
     
     
-    <updated>Tue, 25 Apr 2017 22:05:07 MST</updated>
+    <updated>Thu, 27 Apr 2017 20:23:50 MST</updated>
+    
+    <item>
+      <title>Automating advanced DC/OS installation.</title>
+      <link>https://dobriak.github.io/post/automated-advanced-dcos-installation/</link>
+      <pubDate>Thu, 27 Apr 2017 20:23:50 MST</pubDate>
+      
+      <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
+      <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Using Jenkins with a private Docker registry on DC/OS</title>

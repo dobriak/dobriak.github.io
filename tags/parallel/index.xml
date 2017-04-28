@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Devops on dobriak::blog </title>
+      <title>Parallel on dobriak::blog </title>
       <generator uri="https://gohugo.io">Hugo</generator>
-    <link>https://dobriak.github.io/categories/devops/index.xml</link>
+    <link>https://dobriak.github.io/tags/parallel/index.xml</link>
     <language>en-us</language>
     
     
@@ -16,17 +16,6 @@
       
       <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
       <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>Using Jenkins with a private Docker registry on DC/OS</title>
-      <link>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</link>
-      <pubDate>Tue, 25 Apr 2017 22:05:07 MST</pubDate>
-      
-      <guid>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</guid>
-      <description>&lt;p&gt;In this guide I will walk you through setting up your Jenkins instance to use the private docker registry we set up in the previous blog post.&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>
