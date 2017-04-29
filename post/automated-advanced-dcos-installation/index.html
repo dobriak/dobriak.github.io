@@ -120,7 +120,7 @@
 </tbody>
 </table>
 
-<p>Either of the above combinations will work for our purpose. Pick a smaller one if you have budgeting concerns.</p>
+<p>Any of the above combinations will work for our purpose. Pick a smaller one if you have budgeting concerns.</p>
 
 <p>Spin up all instances in EC2, making sure you configure the following:</p>
 
@@ -166,7 +166,7 @@ AWSNODES=&quot;${AWSNODESB} ${AWSNODESM} ${AWSNODESPUB} ${AWSNODESPRIV}&quot;
 <li>B - bootstrap node</li>
 <li>M - master node(s)</li>
 <li>PRIV - private node(s)</li>
-<li>PUB - public node(s).</li>
+<li>PUB - public self.homelab node(s).</li>
 </ul>
 
 <h3 id="dc-os-installation">DC/OS Installation</h3>
@@ -251,7 +251,7 @@ sudo systemctl enable docker
 
 <ul>
 <li>IP detection script - this script needs to be able to produce the IP (EC2 private) address.</li>
-<li>gencong/config.yaml - this is the most important part of the advanced installation. Many of the settings in here once deployed, can not be changed without upgrade or even re-deployment. Since we are doing this the opinionated way, I will introduce a general case, easy to tweak starting point that will be a fine choice for <sup>2</sup>&frasl;<sub>3</sub> of all use cases.</li>
+<li>genconf/config.yaml - this is the most important part of the advanced installation. Many of the settings in here once deployed, can not be changed without upgrade or even re-deployment. Since we are doing this the opinionated way, I will introduce a general case, easy to tweak starting point that will be a fine choice for <sup>2</sup>&frasl;<sub>3</sub> of all use cases.</li>
 </ul>
 
 <p><code>bootstrap.sh</code></p>
