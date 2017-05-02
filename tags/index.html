@@ -5,9 +5,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Tags - dobriak::blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <meta name="keywords" content="">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization">
   <link rel="canonical" href="https://dobriak.github.io/tags/">
 
   
@@ -19,7 +19,7 @@
   
   
 
-  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+  
 
 </head>
 <body class="">
@@ -84,12 +84,30 @@
 </nav>
 
           <small>
-            Copyright &#169; 2017<br>
+            Copyright &#169; Julian Neytchev 2017<br>
             Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
           </small>
         </div>
       </div>
     </footer>
+
+    
+    <noscript id="deferred-styles">
+      <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+    </noscript>
+    <script>
+      var loadDeferredStyles = function() {
+        var addStylesNode = document.getElementById("deferred-styles");
+        var replacement = document.createElement("div");
+        replacement.innerHTML = addStylesNode.textContent;
+        document.body.appendChild(replacement)
+        addStylesNode.parentElement.removeChild(addStylesNode);
+      };
+      var raf = requestAnimationFrame || mozRequestAnimationFrame ||
+          webkitRequestAnimationFrame || msRequestAnimationFrame;
+      if (raf) raf(function() { window.setTimeout(loadDeferredStyles, 0); });
+      else window.addEventListener('load', loadDeferredStyles);
+    </script>
 
     
     <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
