@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Compiling Local DC/OS Universe - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/compiling-local-universe/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Compiling Local DC/OS Universe</h1>
+        <span class="post-meta">May 27, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>DC/OS offers its users the ability to install various frameworks with a single click from a central publicly hosted package repository called Universe.</p>
+
+<p>Many Mesosphere clients run their DC/OS clusters in air-gapped environments with no access to the internet, thus not allowing for said one click installation of framework packages.</p>
+
+<p>You can easily solve this problem if your DC/OS cluster is running in such a restricted environment.</p>
+
+<p></p>
+
+<p>The simplest way to give your users access to the packages in the Universe repository is by compiling a copy of it (called local Universe) and hosting it internally to your cluster.</p>
+
+<p>The Mesosphere documentation <a href="https://docs.mesosphere.com/1.9/administering-clusters/deploying-a-local-dcos-universe/" title="steps to utilze local Universe">covers all steps</a> needed to utilize such a copy.</p>
+
+<p>Here we will focus on a more user friendly way of generating the local Universe tarball. The original instructions suggest you should be replacing strings in a Makefile and then running the build. While this works pretty well if you know exactly what is needed, it is not very user friendly.</p>
+
+<p>I have written a bit of automation that will spin up a Vagrant machine or an AWS instance, install all prerequisites needed and present a TUI dialog allowing you to pick and choose all framework packages. Once compiled, the local Universe tarball will be available to download from a web server running on your Vagrant machine or AWS instance.</p>
+
+<p>Here is how to use it on your machine:</p>
+
+<pre><code class="language-bash">git clone https://github.com/dobriak/dcos-universe-builder.git
+cd dcos-universe-builder
+</code></pre>
+
+<h3 id="vagrant">Vagrant</h3>
+
+<p>If you would like to quickly try out building a local Universe, Vagrant is the quickest (and free) way to do it. Please note that the default CentOS/7 Vagrant box used has limited disk size and if you are to include many framework packages, you might run out of space.</p>
+
+<pre><code class="language-bash">vagrant up
+</code></pre>
+
+<p>Wait for the prerequisites to install, then ssh into the Vagrant machine and run the framework selection script.</p>
+
+<pre><code class="language-bash">vagrant ssh
+# In your Vagrant machine
+/vagrant/scripts/select_frameworks.sh
+</code></pre>
+
+<h3 id="aws-instance">AWS instance</h3>
+
+<p>Launch an AWS EC2 instance using the Quick Start RHEL 7 AMI, any instance type that can run Docker will work (I use m4.xlarge), assign at least 20GB of disk space. For simplicity, let the instance get a public IP. Select a security group (or create one) that allows external access to  port TCP/9999.</p>
+
+<p>Edit aws.config setting the path to your AWS key file, the public IP of your instance and the default user for that AMI (ec2-user for the Quick Start RHEL 7 AMI).</p>
+
+<pre><code class="language-bash"># On your machine
+./aws_bootstrap.sh
+</code></pre>
+
+<p>Once the prerequisites are installed, the script will log you into your AWS EC2 instance, where you can run the framework selection script:</p>
+
+<pre><code class="language-bash"># In your AWS EC2 instance
+./select_frameworks.sh
+</code></pre>
+
+<p>Operating the TUI is very simple, use the arrows and the space bar to select/deselect frameworks. Once happy with your selection, hit the Tab key to switch to the buttons and select &ldquo;OK&rdquo;.</p>
+
+<p><img src="https://dobriak.github.io/images/universe-dialog1a.png" alt="UniverseDialog1" /></p>
+
+<p>The script will ask you if you would like to build the local Universe and then start a webserver , so you can download the (potentially very big) tarball.</p>
+
+<pre><code class="language-bash"># On your machine
+curl -O http://127.0.0.1:9999/local-universe.tar.gz
+curl -O http://127.0.0.1:9999/local-universe.tar.gz.sha256
+# Make sure your file is identical
+sha256sum local-universe.tar.gz
+cat local-universe.tar.gz.sha256
+</code></pre>
+
+<p>It is important to make sure that the file you just downloaded is identical to the one generated by the script, as the file can get very big (up to 10-15GB).</p>
+
+<p>To skip all confirmation dialogs you can pass a &ldquo;-y&rdquo; parameter to select_frameworks.sh</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/universe">universe</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/local">local</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/air-gapped">air-gapped</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/dialog">dialog</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/tui">tui</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

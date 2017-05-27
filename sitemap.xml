@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://dobriak.github.io/post/compiling-local-universe/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/post/automated-advanced-dcos-installation/</loc>
     <lastmod>2017-04-27T20:23:50-07:00</lastmod>
   </url>
@@ -27,26 +32,38 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/air-gapped/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/categories/automation/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://dobriak.github.io/categories/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://dobriak.github.io/tags/dcos/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://dobriak.github.io/categories/devops/</loc>
     <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dobriak.github.io/tags/dialog/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -69,6 +86,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/local/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/marathon-lb/</loc>
     <lastmod>2017-04-25T22:05:07-07:00</lastmod>
     <priority>0</priority>
@@ -82,7 +105,7 @@
   
   <url>
     <loc>https://dobriak.github.io/post/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -106,7 +129,7 @@
   
   <url>
     <loc>https://dobriak.github.io/tags/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -117,8 +140,20 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/tui/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dobriak.github.io/tags/universe/</loc>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/</loc>
-    <lastmod>2017-04-27T20:23:50-07:00</lastmod>
+    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   

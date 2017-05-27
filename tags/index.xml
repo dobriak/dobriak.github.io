@@ -7,14 +7,32 @@
     <language>en-us</language>
     
     
-    <updated>Thu, 27 Apr 2017 20:23:50 PDT</updated>
+    <updated>Sat, 27 May 2017 00:51:14 PDT</updated>
+    
+    <item>
+      <title>Air Gapped</title>
+      <link>https://dobriak.github.io/tags/air-gapped/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/air-gapped/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Dcos</title>
       <link>https://dobriak.github.io/tags/dcos/</link>
-      <pubDate>Thu, 27 Apr 2017 20:23:50 PDT</pubDate>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
       
       <guid>https://dobriak.github.io/tags/dcos/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Dialog</title>
+      <link>https://dobriak.github.io/tags/dialog/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/dialog/</guid>
       <description></description>
     </item>
     
@@ -33,6 +51,15 @@
       <pubDate>Tue, 25 Apr 2017 22:05:07 PDT</pubDate>
       
       <guid>https://dobriak.github.io/tags/jenkins/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Local</title>
+      <link>https://dobriak.github.io/tags/local/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/local/</guid>
       <description></description>
     </item>
     
@@ -87,6 +114,24 @@
       <pubDate>Mon, 24 Apr 2017 16:45:12 PDT</pubDate>
       
       <guid>https://dobriak.github.io/tags/tls/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Tui</title>
+      <link>https://dobriak.github.io/tags/tui/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/tui/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Universe</title>
+      <link>https://dobriak.github.io/tags/universe/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 PDT</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/universe/</guid>
       <description></description>
     </item>
     

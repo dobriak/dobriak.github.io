@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Automation on dobriak::blog </title>
+      <title>Dialog on dobriak::blog </title>
       <generator uri="https://gohugo.io">Hugo</generator>
-    <link>https://dobriak.github.io/categories/automation/</link>
+    <link>https://dobriak.github.io/tags/dialog/</link>
     <language>en-us</language>
     
     
@@ -20,17 +20,6 @@
 &lt;p&gt;Many Mesosphere clients run their DC/OS clusters in air-gapped environments with no access to the internet, thus not allowing for said one click installation of framework packages.&lt;/p&gt;
 
 &lt;p&gt;You can easily solve this problem if your DC/OS cluster is running in such a restricted environment.&lt;/p&gt;
-
-&lt;p&gt;&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>Automating advanced DC/OS installation.</title>
-      <link>https://dobriak.github.io/post/automated-advanced-dcos-installation/</link>
-      <pubDate>Thu, 27 Apr 2017 20:23:50 PDT</pubDate>
-      
-      <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
-      <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>
