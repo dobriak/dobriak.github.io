@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>IP per Container with Calico CNI on DC/OS - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/using-calico-on-dcos/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">IP per Container with Calico CNI on DC/OS</h1>
+        <span class="post-meta">Jul 18, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p><a href="https://www.projectcalico.org//">Project Calico</a> is a Layer 3 software defined network that runs well on <a href="http://docs.projectcalico.org/v2.3/getting-started/mesos/">DC/OS and Mesos</a>. In this blog post we will walk through installing and configuring it on DC/OS 1.9. That will allow us to attach containers to Calico and receive unique IPs for them. We will also examine the security implications and policies that can be applied.</p>
+
+<p></p>
+
+<p>DC/OS 1.9 supports 2 ways of running your containers:</p>
+
+<ul>
+<li>Docker daemon - with the pros and cons that come with that</li>
+<li>UCR (<a href="https://docs.mesosphere.com/1.9/deploying-services/containerizers/ucr/">Universal Container Runtime</a>) - the new and future proof way to run not only native workloads but also packaged Docker images.</li>
+</ul>
+
+<p>Our interest is with UCR and its ability to work with the CNI (<a href="https://github.com/containernetworking/cni">Container Network Interface</a>) open container networking standard.</p>
+
+<h3 id="prerquisites">Prerquisites</h3>
+
+<ul>
+<li>Running DC/OS cluster 1.9 with at least 3 private nodes. Either OSS or EE version will work.</li>
+<li>SSH access to all nodes in your cluster</li>
+<li>DC/OS CLI installed on your local machine and authenticated against the cluster. Also, an ssh-agent started with your key added so you can utilize <code>dcos node ssh</code> commands.</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<ul>
+<li>Install the etcd package from the Universe, wait until all of its nodes are functional (it takes about 10 minutes on AWS)</li>
+</ul>
+
+<pre><code class="language-bash">[laptop ~]$ dcos package install etcd --yes
+This DC/OS Service is currently in preview. In order for etcd to start successfully all resources must be available in the cluster including ports, CPU shares and RAM.
+We recommend a minimum of 3 nodes with 1 CPU share and 128 MB of RAM available for use by the etcd service.
+Note that the service is alpha and there may be bugs, including possible data loss, incomplete features, incorrect documentation or other discrepancies.
+Installing Marathon app for package [etcd] version [0.0.3]
+Once the cluster initializes (&lt;1 minute if offers are available), etcd proxies may connect by passing the argument -discovery-srv=etcd.mesos (or -discovery-srv=&lt;framework-name&gt;.mesos if you're not using the default), and you may discover live members by querying SRV records for _etcd-server._tcp.&lt;framework-name&gt;.mesos
+</code></pre>
+
+<ul>
+<li>Install the Calico framework installer. This will also take long time and it will involve restarting of the private agents processes. Give it at least 20 minutes.</li>
+</ul>
+
+<pre><code class="language-bash">[laptop ~]$ dcos package install calico --yes
+This DC/OS Service is currently in preview. Before installing Calico, ensure the DC/OS etcd package is installed (if not using own etcd server). Note: this scheduler may makes permament changes to all Agents and Docker Daemons in the cluster. Calico's DC/OS installation framework is currently in beta.
+Installing Marathon app for package [calico] version [0.4.0]
+Calico services are now running on your cluster. Follow the Calico DC/OS guide available at https://github.com/projectcalico/calico-containers/blob/master/docs/mesos/dcos.md
+
+</code></pre>
+
+<ul>
+<li>If your cluster is running in AWS, please disable the Source/Destination Checks on all of your private nodes. To do so log into the AWS EC2 interface, right click on each of the instances that are used as private nodes and select Networking / Change Source/Dest. Check, [Yes, Disable]</li>
+</ul>
+
+<p><img src="https://dobriak.github.io/images/srcdest.png" alt="SourceDestCheck" /></p>
+
+<h3 id="accessing-services-in-your-containers">Accessing services in your containers</h3>
+
+<p>Once you start using Calico for IP assignment to your containers you can make use of the automatic service discovery that comes baked in with DC/OS. This will allow you to refer to your (group of) containers by their service name instead of IP addresses. You get 2 choices of what those URLs can look like:</p>
+
+<ul>
+<li><code>&lt;service-name&gt;.marathon.containerip.dcos.thisdcos.directory</code> - this one is available out of the box, no additional configuration needed</li>
+<li><code>&lt;service-name&gt;.marathon.mesos</code>  - you will have to make a change to Mesos-DNS on your master nodes in order to get this working.</li>
+</ul>
+
+<h3 id="mesos-dns-change-if-desired">Mesos-DNS change (if desired)</h3>
+
+<p>To get Mesos-DNS to resolve URLs in the form of <service-name>.marathon.mesos to the actual container IP, as opposed to the host on which the container is spun up, follow this procedure:</p>
+
+<p>SSH log in to all of your master nodes and edit this file:</p>
+
+<p>OSS DC/OS</p>
+
+<pre><code class="language-bash">[masterN ~]$ sudo vi /opt/mesosphere/etc/mesos-dns.json 
+</code></pre>
+
+<p>EE DC/OS</p>
+
+<pre><code class="language-bash">[masterN ~]$ sudo vi /opt/mesosphere/etc/mesos-dns-enterprise.json 
+</code></pre>
+
+<p>Swap the places of &ldquo;host&rdquo; and &ldquo;netinfo&rdquo; in the IPSources setting, so it reads:</p>
+
+<pre><code class="language-bash">&quot;IPSources&quot;: [&quot;netinfo&quot;, &quot;host&quot;]
+</code></pre>
+
+<p>Restart the Mesos-DNS service</p>
+
+<pre><code class="language-bash">sudo systemctl restart dcos-mesos-dns
+</code></pre>
+
+<h3 id="attaching-containers-to-calico-s-network-via-cni">Attaching containers to Calico&rsquo;s network via CNI</h3>
+
+<p>The Calico installation package creates a default network called &ldquo;calico&rdquo; to which we will attach our containers via CNI. The configuration file for it can be found on all private and public nodes under <code>/opt/mesosphere/etc/dcos/network/cni/calico.cni</code>.</p>
+
+<p>Note that if you want to add another network, you would have to create another .cni file in that directory and restart the dcos-mesos-slave (dcos-mesos-slave-public on public nodes) on each node.</p>
+
+<p>We can tell Marathon to attach our containers to the &ldquo;calico&rdquo; network by specifying the following snippet in the service definition:</p>
+
+<pre><code class="language-json">&quot;ipAddress&quot;: {        
+    &quot;networkName&quot;: &quot;calico&quot;,
+    &quot;labels&quot;: {
+      &quot;&lt;key1&gt;&quot;: &quot;&lt;value1&gt;&quot;,
+      &quot;&lt;key2&gt;&quot;: &quot;&lt;value2&gt;&quot;
+    }
+}
+</code></pre>
+
+<p>Here <code>networkName</code> tells Marathon to assign <code>USER</code> - CNI type of networking to the container and attach it to a network called &ldquo;calico&rdquo;.</p>
+
+<p>The IP address will be assigned automatically and the container will be tagged with the key-value pairs inside the <code>labels</code> section. Those key-value pairs will later come handy when we design our security policy.</p>
+
+<p>By default, all containers assigned to the same Calico network will be able to talk to eachother. In practice, this is not secure at all, so we will create a policy that will allow us to split our containers in logical groups with isolation between them.</p>
+
+<h3 id="simple-use-case">Simple Use Case</h3>
+
+<p>Consider the following set up for a simplistic application :</p>
+
+<ul>
+<li>front end, running a web server container with our fictitious microservice</li>
+<li>database running in a container that provides data storage for the microservice</li>
+<li>tester container that has diagnostic tools that know how to talk to both the front end and the database</li>
+</ul>
+
+<p>We want to have 2 environments that are completely separate from each other.</p>
+
+<ul>
+<li>development which exposes the front end to our company-wide LAN</li>
+<li>production which offers the front end to the Internet</li>
+</ul>
+
+<p>Based on what we learned about attaching containers to Calico, we can spin up the following containers:</p>
+
+<ul>
+<li>prod-frontend.json</li>
+</ul>
+
+<p>Here we request an Nginx Docker image to be run in our UCR, connected to a CNI based network called &ldquo;calico&rdquo;. We are also opening port 80 on the resulting IP address.</p>
+
+<pre><code>{
+    &quot;id&quot;: &quot;frontend&quot;,
+    &quot;container&quot;: {
+      &quot;type&quot;: &quot;MESOS&quot;,
+      &quot;docker&quot;: {
+        &quot;image&quot;: &quot;nginx:alpine&quot;
+      }
+    },
+    &quot;instances&quot;: 1,
+    &quot;cpus&quot;: 0.1,
+    &quot;mem&quot;: 64.0,
+    &quot;ipAddress&quot;: {
+        &quot;networkName&quot;: &quot;calico&quot;,
+        &quot;labels&quot;: {
+          &quot;app&quot;: &quot;frontend&quot;,
+          &quot;group&quot;: &quot;production&quot;
+        },
+        &quot;discovery&quot;: { &quot;ports&quot;: [{ &quot;name&quot;: &quot;http&quot;, &quot;number&quot;: 80, &quot;protocol&quot;: &quot;tcp&quot; }]}
+    }
+}
+</code></pre>
+
+<ul>
+<li>prod-tester.json</li>
+</ul>
+
+<p>This Docker images comes with a few networking tools that we will make use of to inspect our front end and database.</p>
+
+<pre><code>{
+    &quot;id&quot;: &quot;tester&quot;,
+    &quot;container&quot;: {
+      &quot;type&quot;: &quot;MESOS&quot;,
+      &quot;docker&quot;: {
+        &quot;image&quot;: &quot;donch/net-tools&quot;
+      }
+    },
+    &quot;instances&quot;: 1,
+    &quot;cmd&quot;: &quot;ifconfig &amp;&amp; sleep 4h&quot;,
+    &quot;cpus&quot;: 0.1,
+    &quot;mem&quot;: 64.0,
+    &quot;ipAddress&quot;: {        
+        &quot;networkName&quot;: &quot;calico&quot;,
+        &quot;labels&quot;: {
+          &quot;app&quot;: &quot;tester&quot;,
+          &quot;group&quot;: &quot;production&quot;
+        }
+    }
+}
+</code></pre>
+
+<ul>
+<li>prod-database.json</li>
+</ul>
+
+<p>This is an H2 docker image that exposes ports 1521 (database connection) and 81 (UI).</p>
+
+<pre><code>{
+    &quot;id&quot;: &quot;database&quot;,
+    &quot;container&quot;: {
+      &quot;type&quot;: &quot;MESOS&quot;,
+      &quot;docker&quot;: {
+        &quot;image&quot;: &quot;oscarfonts/h2&quot;
+      }
+    },
+    &quot;instances&quot;: 1,
+    &quot;cpus&quot;: 0.3,
+    &quot;mem&quot;: 128.0,
+    &quot;ipAddress&quot;: {
+        &quot;networkName&quot;: &quot;calico&quot;,
+        &quot;labels&quot;: {
+          &quot;app&quot;: &quot;database&quot;,
+          &quot;group&quot;: &quot;production&quot;
+        },
+        &quot;discovery&quot;: { 
+            &quot;ports&quot;: [
+                { &quot;name&quot;: &quot;database&quot;, &quot;number&quot;: 1521, &quot;protocol&quot;: &quot;tcp&quot; },
+                { &quot;name&quot;: &quot;http&quot;, &quot;number&quot;: 81, &quot;protocol&quot;: &quot;tcp&quot; }
+            ]
+        }
+    }
+}
+</code></pre>
+
+<p>Similarly, the containers running in our development would look like so:</p>
+
+<ul>
+<li><p>dev-frontend.json</p>
+
+<pre><code>{
+&quot;id&quot;: &quot;frontend2&quot;,
+&quot;container&quot;: {
+  &quot;type&quot;: &quot;MESOS&quot;,
+  &quot;docker&quot;: {
+    &quot;image&quot;: &quot;nginx:alpine&quot;
+  }
+},
+&quot;instances&quot;: 1,
+&quot;cpus&quot;: 0.1,
+&quot;mem&quot;: 64.0,
+&quot;ipAddress&quot;: {
+    &quot;networkName&quot;: &quot;calico&quot;,
+    &quot;labels&quot;: {
+      &quot;app&quot;: &quot;frontend&quot;,
+      &quot;group&quot;: &quot;development&quot;
+    },
+    &quot;discovery&quot;: { &quot;ports&quot;: [{ &quot;name&quot;: &quot;http&quot;, &quot;number&quot;: 80, &quot;protocol&quot;: &quot;tcp&quot; }]}
+}
+}
+</code></pre></li>
+
+<li><p>dev-tester.json</p>
+
+<pre><code>{
+&quot;id&quot;: &quot;tester2&quot;,
+&quot;container&quot;: {
+  &quot;type&quot;: &quot;MESOS&quot;,
+  &quot;docker&quot;: {
+    &quot;image&quot;: &quot;donch/net-tools&quot;
+  }
+},
+&quot;instances&quot;: 1,
+&quot;cmd&quot;: &quot;ifconfig &amp;&amp; sleep 4h&quot;,
+&quot;cpus&quot;: 0.1,
+&quot;mem&quot;: 64.0,
+&quot;ipAddress&quot;: {        
+    &quot;networkName&quot;: &quot;calico&quot;,
+    &quot;labels&quot;: {
+      &quot;app&quot;: &quot;tester&quot;,
+      &quot;group&quot;: &quot;development&quot;
+    }
+}
+}
+</code></pre></li>
+
+<li><p>dev-database.json</p>
+
+<pre><code>{
+&quot;id&quot;: &quot;database2&quot;,
+&quot;container&quot;: {
+  &quot;type&quot;: &quot;MESOS&quot;,
+  &quot;docker&quot;: {
+    &quot;image&quot;: &quot;oscarfonts/h2&quot;
+  }
+},
+&quot;instances&quot;: 1,
+&quot;cpus&quot;: 0.3,
+&quot;mem&quot;: 128.0,
+&quot;ipAddress&quot;: {
+    &quot;networkName&quot;: &quot;calico&quot;,
+    &quot;labels&quot;: {
+      &quot;app&quot;: &quot;database&quot;,
+      &quot;group&quot;: &quot;development&quot;
+    },
+    &quot;discovery&quot;: { 
+        &quot;ports&quot;: [
+            { &quot;name&quot;: &quot;database&quot;, &quot;number&quot;: 1521, &quot;protocol&quot;: &quot;tcp&quot; },
+            { &quot;name&quot;: &quot;http&quot;, &quot;number&quot;: 81, &quot;protocol&quot;: &quot;tcp&quot; }
+        ]
+    }
+}
+}
+</code></pre></li>
+</ul>
+
+<p>Lets deploy them all</p>
+
+<pre><code class="language-bash">[laptop ~]$ ls
+dev-database.json  dev-frontend.json  dev-tester.json  prod-database.json  prod-frontend.json  prod-tester.json
+
+[laptop ~]$ for s in *json; do dcos marathon app add ${s}; done
+
+[laptop ~]$ dcos marathon app list
+ID                         MEM  CPUS  TASKS  HEALTH  DEPLOYMENT  WAITING  CONTAINER  CMD
+/calico-install-framework  512  0.2    1/1    1/1       ---      False      DOCKER   None
+/database                  128  0.3    1/1    ---       ---      False      MESOS    None
+/database2                 128  0.3    1/1    ---       ---      False      MESOS    None
+/etcd                      128  0.2    1/1    1/1       ---      False      DOCKER   None
+/frontend                   64  0.1    1/1    ---       ---      False      MESOS    None
+/frontend2                  64  0.1    1/1    ---       ---      False      MESOS    None
+/tester                     64  0.1    1/1    ---       ---      False      MESOS    ifconfig &amp;&amp; sleep 4h
+/tester2                    64  0.1    1/1    ---       ---      False      MESOS    ifconfig &amp;&amp; sleep 4h
+</code></pre>
+
+<p>As it is, all containers will be able to talk to each other. For example tester2 (dev) will be able to access frontend (prod):</p>
+
+<pre><code class="language-bash">[laptop ~]$ dcos task | grep tester2
+tester2   10.0.1.190  root R tester2.891c8da1-6cf0-11e7-a59c-060dbac461cc  29e81d88-3429-49df-9057-4798b85d99ea-S1
+
+[laptop ~]$ dcos task exec tester2.891c8da1-6cf0-11e7-a59c-060dbac461cc ping -c 3 frontend.marathon.containerip.dcos.thisdcos.directory
+PING frontend.marathon.containerip.dcos.thisdcos.directory (192.168.218.65): 56 data bytes
+64 bytes from 192.168.218.65: seq=0 ttl=62 time=0.747 ms
+64 bytes from 192.168.218.65: seq=1 ttl=62 time=0.306 ms
+64 bytes from 192.168.218.65: seq=2 ttl=62 time=0.339 ms
+
+--- frontend.marathon.containerip.dcos.thisdcos.directory ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.306/0.464/0.747 ms
+</code></pre>
+
+<p>Calico allows you to create finely grained security policies and we are going to utilize the <code>app</code> and <code>group</code> labels to create some.</p>
+
+<p>SSH into any of your private nodes and download the latest calicoctl binary.</p>
+
+<pre><code class="language-bash">[laptop ~]$ eval `ssh-agent`; ssh-add /path/to/ssh/key
+[laptop ~]$ dcos node
+# Pick one of the agent IDs
+
+[laptop ~]$ dcos node ssh --master-proxy --mesos-id=&lt;ID-from-the-above-command&gt;
+
+[agentN ~]$ wget https://github.com/projectcalico/calicoctl/releases/download/v1.3.0/calicoctl 
+[agentN ~]$ chmod +x calicoctl
+</code></pre>
+
+<p>Let&rsquo;s first delete the rule in the default profile that allows all containers to talk to each other.</p>
+
+<pre><code class="language-bash">[agentN ~]$ ./calicoctl get profile -o yaml &gt; calico-profile.yaml
+# Edit calico-profile.yaml and remove this segment under spec / ingress
+#    - action: allow
+#      destination: {}
+#      source:
+#        tag: calico
+
+[agentN ~]$ ./calicoctl replace -f ./calico-profile.yaml
+Successfully replaced 1 'profile' resource(s)
+</code></pre>
+
+<p>First lets enable containers in the development group ping each other:</p>
+
+<ul>
+<li>allow-dev-pings.yaml</li>
+</ul>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: policy
+metadata:
+  name: allow-dev-pings
+spec:
+  selector: group == 'development'
+  ingress:
+  - action: allow
+    icmp:
+      type: 8
+</code></pre>
+
+<p>Now, lets create policies that will allow the tester container to access the front end on port 80 in the development group.</p>
+
+<ul>
+<li>allow-dev-tester-frontend.yaml</li>
+</ul>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: policy
+metadata:
+  name: allow-dev-tester-frontend
+spec:
+  selector: group == 'development'
+  ingress:
+  - action: allow
+    protocol: tcp
+    source:
+      selector: app == 'tester'
+    destination:
+      selector: app == 'frontend'
+      ports:
+      - 80
+  egress:
+  - action: allow
+</code></pre>
+
+<p>Similarly, let&rsquo;s also allow the tester container access to the management UI of our H2 database running on port 81 in the development group</p>
+
+<ul>
+<li>allow-dev-tester-database</li>
+</ul>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: policy
+metadata:
+  name: allow-dev-tester-database
+spec:
+  selector: group == 'development'
+  ingress:
+  - action: allow
+    protocol: tcp
+    source:
+      selector: app == 'tester'
+    destination:
+      selector: app == 'database'
+      ports:
+      - 81
+  egress:
+  - action: allow
+</code></pre>
+
+<p>We would also need our fictitious application to access the database on port 1521 in the development group, so lets add that policy also:</p>
+
+<ul>
+<li>allow-dev-frontend-database.yaml</li>
+</ul>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: policy
+metadata:
+  name: allow-dev-frontend-database
+spec:
+  selector: group == 'development'
+  ingress:
+  - action: allow
+    protocol: tcp
+    source:
+      selector: app == 'frontend'
+    destination:
+      selector: app == 'database'
+      ports:
+      - 1521
+  egress:
+  - action: allow
+</code></pre>
+
+<p>And, finally, lets allow ingress traffic from your company&rsquo;s LAN to the front end in your development group:</p>
+
+<ul>
+<li>allow-dev-lan-frontend.yaml</li>
+</ul>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: policy
+metadata:
+  name: allow-dev-tester-database
+spec:
+  selector: group == 'development'
+  ingress:
+  - action: allow
+    protocol: tcp
+    source:
+      net: '&lt;your-lan-CIDR&gt;'
+    destination:
+      selector: app == 'frontend'
+      ports:
+      - 81
+  egress:
+  - action: allow 
+</code></pre>
+
+<p>With all the desired policies for the development group in place, lets apply them all:</p>
+
+<pre><code class="language-bash">[agentN ~]$ ls
+allow-dev-frontend-database.yaml  allow-dev-pings.yaml            allow-dev-tester-frontend.yaml  calicoctl
+allow-dev-lan-frontend.yaml       allow-dev-tester-database.yaml  calico-profile.yaml
+
+[agentN ~]$ for p in *yaml; do ./calicoctl create -f ${p}; done
+</code></pre>
+
+<p>Run the dcos task exec command from the context of development group tester container to verify our policies:</p>
+
+<pre><code class="language-bash">[laptop ~]$ dcos task | grep tester2
+# Assign the task ID of tester2 to an 
+# environment variable, for example TESTER2ID
+
+# These should work:
+[laptop ~]$ dcos task exec ${TESTER2ID} ping -c 3 frontend2.marathon.containerip.dcos.thisdcos.directory
+[laptop ~]$ dcos task exec ${TESTER2ID} curl frontend2.marathon.containerip.dcos.thisdcos.directory
+[laptop ~]$ dcos task exec ${TESTER2ID} curl database2.marathon.containerip.dcos.thisdcos.directory:81
+
+# Pinging or accessing anything in the production 
+# group from the development group should _not_ work
+[laptop ~]$ dcos task exec ${TESTER2ID} ping -c 3 frontend.marathon.containerip.dcos.thisdcos.directory
+[laptop ~]$ dcos task exec ${TESTER2ID} curl frontend.marathon.containerip.dcos.thisdcos.directory
+</code></pre>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>Hopefully this long blog post made sense and you should be able to adjust the provided marathon definitions and Calico policy yaml files to work with the production group.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/sdn">sdn</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/ucr">ucr</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/cni">cni</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

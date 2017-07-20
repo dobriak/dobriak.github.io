@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://dobriak.github.io/post/using-calico-on-dcos/</loc>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/post/compiling-local-universe/</loc>
     <lastmod>2017-05-27T00:51:14-07:00</lastmod>
   </url>
@@ -45,13 +50,18 @@
   
   <url>
     <loc>https://dobriak.github.io/categories/</loc>
-    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dobriak.github.io/tags/cni/</loc>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://dobriak.github.io/tags/dcos/</loc>
-    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -98,6 +108,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/categories/networking/</loc>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/parallel/</loc>
     <lastmod>2017-04-27T20:23:50-07:00</lastmod>
     <priority>0</priority>
@@ -105,7 +121,7 @@
   
   <url>
     <loc>https://dobriak.github.io/post/</loc>
-    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -122,6 +138,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/sdn/</loc>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/ssl/</loc>
     <lastmod>2017-04-25T22:05:07-07:00</lastmod>
     <priority>0</priority>
@@ -129,7 +151,6 @@
   
   <url>
     <loc>https://dobriak.github.io/tags/</loc>
-    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -146,6 +167,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/ucr/</loc>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/universe/</loc>
     <lastmod>2017-05-27T00:51:14-07:00</lastmod>
     <priority>0</priority>
@@ -153,7 +180,7 @@
   
   <url>
     <loc>https://dobriak.github.io/</loc>
-    <lastmod>2017-05-27T00:51:14-07:00</lastmod>
+    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
     <priority>0</priority>
   </url>
   
