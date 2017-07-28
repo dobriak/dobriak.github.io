@@ -10,6 +10,17 @@
     <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
     
     <item>
+      <title>Getting Started with Apache Cassandra On DC/OS</title>
+      <link>https://dobriak.github.io/post/apache-cassandra-on-dcos/</link>
+      <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/apache-cassandra-on-dcos/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://cassandra.apache.org/&#34;&gt;Apache Cassandra&lt;/a&gt; is a distributed, structured storage system. Cassandra clusters are highly available, scalable, performant, and fault tolerant. DC/OS allows you to quickly configure, install, and manage Apache Cassandra clusters, so you can offer Cassandra as a managed service to your organization.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>IP per Container with Calico CNI on DC/OS</title>
       <link>https://dobriak.github.io/post/using-calico-on-dcos/</link>
       <pubDate>Tue, 18 Jul 2017 22:00:33 MST</pubDate>
