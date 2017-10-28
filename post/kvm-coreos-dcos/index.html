@@ -65,8 +65,22 @@
 <li>Box with at least 16GB of memory you can SSH into and manipulate</li>
 <li>Wired connection to the internet. Wireless would be much harder to set up.</li>
 <li>Latest Fedora Server, of course anything else from the RHEL family would work, or Debian / Ubuntu Server (if you want to adjust the commands from dnf to apt)</li>
-<li>Latest KVM software - <code>sudo dnf install -y @virtualization ; sudo systemctl enable libvirtd ; sudo systemctl start libvirtd</code></li>
-<li>Tmux, sshpass, git <code>sudo dnf install -y tmux sshpass git</code></li>
+<li>Latest KVM software</li>
+</ul>
+
+<pre><code class="language-bash">sudo dnf install -y @virtualization
+sudo systemctl enable libvirtd
+sudo systemctl start libvirtd
+</code></pre>
+
+<ul>
+<li>Tmux, sshpass, git</li>
+</ul>
+
+<pre><code class="language-bash">sudo dnf install -y tmux sshpass git
+</code></pre>
+
+<ul>
 <li>Make sure you have public and private keys in your <code>~/.ssh/</code> directory. If you do not, generate them with <code>ssh-keygen</code>.</li>
 </ul>
 
