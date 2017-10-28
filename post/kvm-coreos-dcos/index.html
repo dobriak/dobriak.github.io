@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>DC/OS on KVM CoreOS VMs - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/kvm-coreos-dcos/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">DC/OS on KVM CoreOS VMs</h1>
+        <span class="post-meta">Oct 28, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>In this article we will automate the DC/OS installation procedure specifically for CoreOS VMs running on KVM (libvirt).</p>
+
+<p></p>
+
+<p>I have been toying with the idea of setting up a home lab server where I can freely break things and abuse the hardware to my liking, without having to pay a monstrous AWS bill. I currently have my eyes set on two different boxes and have decided to not pull the trigger until I find their <a href="https://en.wikipedia.org/wiki/Wife_acceptance_factor">WAF</a>.</p>
+
+<p>Meanwhile, I am going to try to make use of a relatively old NUC with i5 processor and 16GB of memory and see if I can experiment with DC/OS (on the cheap). On it, I have a fresh installation of headless Fedora Server with the KVM group installed. Everything is going to be automated so there is no need of a graphical server. I will run all steps of the set up from that machine.</p>
+
+<h3 id="prerquisites">Prerquisites</h3>
+
+<ul>
+<li>Box with at least 16GB of memory you can SSH into and manipulate</li>
+<li>Wired connection to the internet. Wireless would be much harder to set up.</li>
+<li>Latest Fedora Server, of course anything else from the RHEL family would work, or Debian / Ubuntu Server (if you want to adjust the commands from dnf to apt)</li>
+<li>Latest KVM software - <code>sudo dnf install -y @virtualization ; sudo systemctl enable libvirtd ; sudo systemctl start libvirtd</code></li>
+<li>Tmux, sshpass, git <code>sudo dnf install -y tmux sshpass git</code></li>
+<li>Make sure you have public and private keys in your <code>~/.ssh/</code> directory. If you do not, generate them with <code>ssh-keygen</code>.</li>
+</ul>
+
+<h3 id="networking-setup">Networking setup</h3>
+
+<p>Our DC/OS cluster will operate on the default internal NAT-ed network bridge (virbr0) created by the KVM installer. This usually is in the <code>192.168.122.0/24</code> range.</p>
+
+<p>We will also need to expose our DC/OS UI and public node to our home network so those can be accessed without having to create any tunnels.
+My home network is in the <code>192.168.1.0/24</code> range. In order for our VMs to be able to get an IP address on the home network, we will create a <a href="https://fedoramagazine.org/build-network-bridge-fedora/">network bridge</a> (<code>br0</code>).</p>
+
+<p>The wired network adapter on my NUC is named <code>enp0s25</code>. I am going to use it to set up the <code>br0</code> bridge connection.</p>
+
+<pre><code class="language-bash">sudo nmcli connection add ifname br0 type bridge con-name br0
+sudo nmcli connection add type bridge-slave ifname enp0s25 master br0
+</code></pre>
+
+<h3 id="planning">Planning</h3>
+
+<ul>
+<li>Create automation script that downloads a disk image of the correct CoreOS verion</li>
+<li>Configure and spin up CoreOS VMs</li>
+<li>Run a script to automate the installation of the DC/OS bits on those VMs</li>
+<li>Verify the installation</li>
+</ul>
+
+<h3 id="get-the-code-from-github">Get the code from github</h3>
+
+<pre><code class="language-bash">git checkout https://github.com/dobriak/kvm-coreos-dcos.git
+</code></pre>
+
+<h3 id="explanation-of-setup-sh">Explanation of <code>setup.sh</code></h3>
+
+<ul>
+<li><p>Download the correct CoreOS version - as of the current DC/OS version (1.10.0) the recommended CoreOS version is 1235.9.0 and we do that in the <code>initialSetup()</code> <a href="https://github.com/dobriak/kvm-coreos-dcos/blob/a19e10fc6162c2ce9f8eefa417e3b66bfbdc8ddb/setup.sh#L9">function</a></p></li>
+
+<li><p>Edit <code>setup.sh</code> and set the <code>USER</code> variable to your user (or user whose public and private keys will be used to authenticate against your CoreOS VMs)</p></li>
+
+<li><p>The following VMs will be created:</p>
+
+<ul>
+<li><strong>b</strong> - bootstrap, used only to set up the cluster. Can later be removed if you are not planning to run any upgrades</li>
+<li><strong>m1</strong> - master node 1, this will be a single master cluster as the resources are limited. The master node gets an &ldquo;external&rdquo; facing leg on the home network so we can access the DC/OS GUI.</li>
+<li><strong>a1</strong> and <strong>a2</strong> - agent nodes 1 and 2, this is where our services will be running</li>
+<li><strong>p1</strong> - public node 1, this is our &ldquo;external&rdquo; facing node for anything that you may want to expose outside of your cluster</li>
+</ul></li>
+
+<li><p>All network MAC and IP addresses are hardcoded in an <a href="https://github.com/dobriak/kvm-coreos-dcos/blob/a19e10fc6162c2ce9f8eefa417e3b66bfbdc8ddb/setup.sh#L161">array</a> . so if any of those IPs collide with yours, feel free to change them (don&rsquo;t forget to do so in the cluster.conf file too).</p></li>
+
+<li><p>Same with the directories under /var/lib/libvirt - standard naming scheme is followed, but you have a different set up, feel free to edit the <code>domain_dir</code> and <code>image_dir</code> variables in <code>setup.sh</code>.</p></li>
+</ul>
+
+<h3 id="explanation-of-dcos-parallel-install-sh">Explanation of <code>dcos_parallel_install.sh</code></h3>
+
+<ul>
+<li><p>This script is based on a <a href="https://dobriak.github.io/post/automated-advanced-dcos-installation/">previous article</a> and it is, obviously, adapted to work on CoreOS.</p></li>
+
+<li><p>If you need to change any IP addressing, please make sure to also update cluster.conf, as this is what all installation scripts use to connect to the CoreOS VMs</p></li>
+
+<li><p>Make sure to echo your user&rsquo;s password to a file: <code>echo &quot;&lt;my password here&gt;&quot; &gt; pass.txt</code> this is used by sshpass to automate ssh key exchange with your VMs</p></li>
+</ul>
+
+<h3 id="run-the-installation">Run the installation</h3>
+
+<pre><code class="language-bash">sudo ./setup.sh 
+./dcos_parallel_install.sh
+</code></pre>
+
+<p>To clean up everything created by the above scripts, just re-run setup with a clean as the only parameter:</p>
+
+<pre><code class="language-bash">sudo ./setup.sh clean
+</code></pre>
+
+<p>You are done!
+You should be able to access the <a href="http://192.168.1.222">DC/OS UI</a> at <code>http://192.168.1.222</code> (or whichever IP you have decided to use)</p>
+
+<h3 id="references">References</h3>
+
+<ul>
+<li><p><a href="https://docs.mesosphere.com/1.10/installing/custom/advanced/">Advanced DC/OS Installer</a></p></li>
+
+<li><p><a href="https://coreos.com/os/docs/latest/booting-with-libvirt.html">Running CoreOS Container Linux on libvirt</a></p></li>
+</ul>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/coreos">coreos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/kvm">kvm</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/libvirt">libvirt</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/qemu">qemu</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/scripting">scripting</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/parallel">parallel</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+
