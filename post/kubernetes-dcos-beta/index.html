@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Install Kubernetes on DC/OS (beta) - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/kubernetes-dcos-beta/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Install Kubernetes on DC/OS (beta)</h1>
+        <span class="post-meta">Oct 28, 2017 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>My <a href="https://mesosphere.com/">employer</a> recently <a href="https://mesosphere.com/blog/dcos-1_10-kubernetes/">announced</a> first class support for running Kubernetes on top of DC/OS version 1.10. In this post we will examine how you can get started with using Kubernetes and we will deploy a sample application.</p>
+
+<p></p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS version 1.10, either OS or EE edition</li>
+<li>At least 3 private nodes with minimum of 6 CPU 6GB memory and 700MB disk</li>
+<li>Machine with the DC/OS CLI installed and connected to your cluster</li>
+<li>kubectl installed preferrable on the same machine as the DC/OS CLI</li>
+</ul>
+
+<h3 id="install-from-the-cli">Install from the CLI</h3>
+
+<p>To initiate a basic Kubernetes cluster installation:</p>
+
+<pre><code class="language-bash">dcos package install beta-kubernetes
+</code></pre>
+
+<p>This will take some time to install, you can watch the DC/OS UI for the progress of the operation. Once the Kubernetes service is in a healthy state and all 19 tasks are running, you can go to the next step.</p>
+
+<h3 id="connecting-to-your-kubernetes-cluster">Connecting to your Kubernetes cluster</h3>
+
+<p>Currently, we will have to initiate a  proxy connection and instruct kubectl to use it in order to communicate with the Kubernetes cluster.</p>
+
+<p>Open a separate terminal session and instatiate said connection on port 9000:</p>
+
+<pre><code class="language-bash">ssh -4 -i /path/to/your/key -N -L 9000:apiserver-insecure.kubernetes.l4lb.thisdcos.directory:9000 &lt;SSH_USER&gt;@&lt;MASTER_IP&gt;
+</code></pre>
+
+<p>In the original terminal session, configure kubectl:</p>
+
+<pre><code class="language-bash">kubectl config set-cluster dcos-k8s --server=http://localhost:9000
+kubectl config set-context dcos-k8s --cluster=dcos-k8s --namespace=default
+kubectl config use-context dcos-k8s
+</code></pre>
+
+<p>Verify that kubectl can interact with Kubernetes:</p>
+
+<pre><code class="language-bash">kubectl get nodes
+</code></pre>
+
+<p>That is it! You can now use your own Kubernetes cluster running on top of DC/OS!</p>
+
+<h3 id="notes-and-disclaimers">Notes and disclaimers</h3>
+
+<ul>
+<li><p>This tutorial is meant to introduce you to installing the beta version of the Kubernetes framework on DC/OS. As a beta software this <em>NOT</em> suitable for production.</p></li>
+
+<li><p>Currently, you can only have one Kubernetes cluster per DC/OS cluster</p></li>
+
+<li><p>DC/OS and Mesos tasks can only reach Kubernetes Services if kube-proxy is running on the DC/OS agent where the request originates from.</p></li>
+
+<li><p>Here is a complete list of all <a href="https://docs.mesosphere.com/service-docs/beta-kubernetes/0.2.2-1.7.7-beta/limitations/">limitations</a> as of this writing (DC/OS version 1.10.0, beta-kubernetes 0.2.2-1.7.7)</p></li>
+</ul>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/kubernetes">kubernetes</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/installation">installation</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

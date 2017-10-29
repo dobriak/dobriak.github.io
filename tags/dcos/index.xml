@@ -10,6 +10,17 @@
     <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
     
     <item>
+      <title>Install Kubernetes on DC/OS (beta)</title>
+      <link>https://dobriak.github.io/post/kubernetes-dcos-beta/</link>
+      <pubDate>Sat, 28 Oct 2017 18:13:41 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/kubernetes-dcos-beta/</guid>
+      <description>&lt;p&gt;My &lt;a href=&#34;https://mesosphere.com/&#34;&gt;employer&lt;/a&gt; recently &lt;a href=&#34;https://mesosphere.com/blog/dcos-1_10-kubernetes/&#34;&gt;announced&lt;/a&gt; first class support for running Kubernetes on top of DC/OS version 1.10. In this post we will examine how you can get started with using Kubernetes and we will deploy a sample application.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>DC/OS on KVM CoreOS VMs</title>
       <link>https://dobriak.github.io/post/kvm-coreos-dcos/</link>
       <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
