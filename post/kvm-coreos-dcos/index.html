@@ -59,7 +59,7 @@
 
 <p>Meanwhile, I am going to try to make use of a relatively old NUC with i5 processor and 16GB of memory and see if I can experiment with DC/OS (on the cheap). On it, I have a fresh installation of headless Fedora Server with the KVM group installed. Everything is going to be automated so there is no need of a graphical server. I will run all steps of the set up from that machine.</p>
 
-<h3 id="prerquisites">Prerquisites</h3>
+<h3 id="prerequisites">Prerequisites</h3>
 
 <ul>
 <li>Box with at least 16GB of memory you can SSH into and manipulate</li>
@@ -127,7 +127,7 @@ sudo nmcli connection add type bridge-slave ifname enp0s25 master br0
 <li><strong>p1</strong> - public node 1, this is our &ldquo;external&rdquo; facing node for anything that you may want to expose outside of your cluster</li>
 </ul></li>
 
-<li><p>All network MAC and IP addresses are hardcoded in an <a href="https://github.com/dobriak/kvm-coreos-dcos/blob/a19e10fc6162c2ce9f8eefa417e3b66bfbdc8ddb/setup.sh#L161">array</a> . so if any of those IPs collide with yours, feel free to change them (don&rsquo;t forget to do so in the cluster.conf file too).</p></li>
+<li><p>All network MAC and IP addresses are hardcoded in an <a href="https://github.com/dobriak/kvm-coreos-dcos/blob/a19e10fc6162c2ce9f8eefa417e3b66bfbdc8ddb/setup.sh#L161">array</a>, so if any of those IPs collide with yours, feel free to change them (don&rsquo;t forget to do so in the cluster.conf file too).</p></li>
 
 <li><p>Same with the directories under /var/lib/libvirt - standard naming scheme is followed, but you have a different set up, feel free to edit the <code>domain_dir</code> and <code>image_dir</code> variables in <code>setup.sh</code>.</p></li>
 </ul>
