@@ -74,10 +74,10 @@ sudo systemctl start libvirtd
 </code></pre>
 
 <ul>
-<li>Tmux, sshpass, git</li>
+<li>Tmux, git</li>
 </ul>
 
-<pre><code class="language-bash">sudo dnf install -y tmux sshpass git
+<pre><code class="language-bash">sudo dnf install -y tmux git
 </code></pre>
 
 <ul>
@@ -116,7 +116,7 @@ sudo nmcli connection add type bridge-slave ifname enp0s25 master br0
 <ul>
 <li><p>Download the correct CoreOS version - as of the current DC/OS version (1.10.0) the recommended CoreOS version is 1235.9.0 and we do that in the <code>initialSetup()</code> <a href="https://github.com/dobriak/kvm-coreos-dcos/blob/a19e10fc6162c2ce9f8eefa417e3b66bfbdc8ddb/setup.sh#L9">function</a></p></li>
 
-<li><p>Edit <code>setup.sh</code> and set the <code>USER</code> variable to your user (or user whose public and private keys will be used to authenticate against your CoreOS VMs)</p></li>
+<li><p>Edit <code>cluster.conf</code> and set the <code>USER</code> variable to your user (or user whose public and private keys will be used to authenticate against your CoreOS VMs)</p></li>
 
 <li><p>The following VMs will be created:</p>
 
@@ -138,23 +138,21 @@ sudo nmcli connection add type bridge-slave ifname enp0s25 master br0
 <li><p>This script is based on a <a href="https://dobriak.github.io/post/automated-advanced-dcos-installation/">previous article</a> and it is, obviously, adapted to work on CoreOS.</p></li>
 
 <li><p>If you need to change any IP addressing, please make sure to also update cluster.conf, as this is what all installation scripts use to connect to the CoreOS VMs</p></li>
-
-<li><p>Make sure to echo your user&rsquo;s password to a file: <code>echo &quot;&lt;my password here&gt;&quot; &gt; pass.txt</code> this is used by sshpass to automate ssh key exchange with your VMs</p></li>
 </ul>
 
 <h3 id="run-the-installation">Run the installation</h3>
 
-<pre><code class="language-bash">sudo ./setup.sh 
-./dcos_parallel_install.sh
+<pre><code class="language-bash">sudo ./setup.sh &amp;&amp; sleep 3m &amp;&amp; ./dcos_parallel_install.sh
 </code></pre>
+
+<p>The installation will take a few minutes. All logs of the installation can be found under <code>/tmp/tmp.${RANDOM}.log.${PID}</code>.</p>
+
+<p>That is it, you are done! You should be able to access the <a href="http://192.168.1.222">DC/OS UI</a> at <code>http://192.168.1.222</code> (or whichever IP you have decided to use)</p>
 
 <p>To clean up everything created by the above scripts, just re-run setup with a clean as the only parameter:</p>
 
 <pre><code class="language-bash">sudo ./setup.sh clean
 </code></pre>
-
-<p>You are done!
-You should be able to access the <a href="http://192.168.1.222">DC/OS UI</a> at <code>http://192.168.1.222</code> (or whichever IP you have decided to use)</p>
 
 <h3 id="references">References</h3>
 
