@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Cni on dobriak::blog </title>
-      <generator uri="https://gohugo.io">Hugo</generator>
-    <link>https://dobriak.github.io/tags/cni/index.xml</link>
+    <title>Cni on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/cni/</link>
+    <description>Recent content in Cni on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <lastBuildDate>Tue, 18 Jul 2017 22:00:33 -0700</lastBuildDate>
     
+	<atom:link href="https://dobriak.github.io/tags/cni/index.xml" rel="self" type="application/rss+xml" />
     
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
     
     <item>
       <title>IP per Container with Calico CNI on DC/OS</title>
       <link>https://dobriak.github.io/post/using-calico-on-dcos/</link>
-      <pubDate>Tue, 18 Jul 2017 22:00:33 MST</pubDate>
+      <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/using-calico-on-dcos/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.projectcalico.org//&#34;&gt;Project Calico&lt;/a&gt; is a Layer 3 software defined network that runs well on &lt;a href=&#34;http://docs.projectcalico.org/v2.3/getting-started/mesos/&#34;&gt;DC/OS and Mesos&lt;/a&gt;. In this blog post we will walk through installing and configuring it on DC/OS 1.9. That will allow us to attach containers to Calico and receive unique IPs for them. We will also examine the security implications and policies that can be applied.&lt;/p&gt;
@@ -22,4 +24,3 @@
     
   </channel>
 </rss>
-

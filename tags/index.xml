@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/</link>
+    <description>Recent content in Tags on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 27 May 2017 00:51:14 -0700</lastBuildDate>
+    
+	<atom:link href="https://dobriak.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Air Gapped</title>
+      <link>https://dobriak.github.io/tags/air-gapped/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/air-gapped/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Cassandra</title>
+      <link>https://dobriak.github.io/tags/cassandra/</link>
+      <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/cassandra/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Cni</title>
+      <link>https://dobriak.github.io/tags/cni/</link>
+      <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/cni/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Coreos</title>
+      <link>https://dobriak.github.io/tags/coreos/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/coreos/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Data Services</title>
+      <link>https://dobriak.github.io/tags/data-services/</link>
+      <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/data-services/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Dcos</title>
+      <link>https://dobriak.github.io/tags/dcos/</link>
+      <pubDate>Sat, 28 Oct 2017 18:13:41 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/dcos/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Dialog</title>
+      <link>https://dobriak.github.io/tags/dialog/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/dialog/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Docker</title>
+      <link>https://dobriak.github.io/tags/docker/</link>
+      <pubDate>Thu, 27 Apr 2017 20:23:50 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/docker/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>https://dobriak.github.io/tags/installation/</link>
+      <pubDate>Sat, 28 Oct 2017 18:13:41 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/installation/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jenkins</title>
+      <link>https://dobriak.github.io/tags/jenkins/</link>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/jenkins/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kubernetes</title>
+      <link>https://dobriak.github.io/tags/kubernetes/</link>
+      <pubDate>Sat, 28 Oct 2017 18:13:41 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/kubernetes/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kvm</title>
+      <link>https://dobriak.github.io/tags/kvm/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/kvm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Libvirt</title>
+      <link>https://dobriak.github.io/tags/libvirt/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/libvirt/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Local</title>
+      <link>https://dobriak.github.io/tags/local/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/local/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Marathon Lb</title>
+      <link>https://dobriak.github.io/tags/marathon-lb/</link>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/marathon-lb/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Parallel</title>
+      <link>https://dobriak.github.io/tags/parallel/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/parallel/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Qemu</title>
+      <link>https://dobriak.github.io/tags/qemu/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/qemu/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Registry</title>
+      <link>https://dobriak.github.io/tags/registry/</link>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/registry/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Scripting</title>
+      <link>https://dobriak.github.io/tags/scripting/</link>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/scripting/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Sdn</title>
+      <link>https://dobriak.github.io/tags/sdn/</link>
+      <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/sdn/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ssl</title>
+      <link>https://dobriak.github.io/tags/ssl/</link>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/ssl/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Stateful</title>
+      <link>https://dobriak.github.io/tags/stateful/</link>
+      <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/stateful/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Tls</title>
+      <link>https://dobriak.github.io/tags/tls/</link>
+      <pubDate>Mon, 24 Apr 2017 16:45:12 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/tls/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Tui</title>
+      <link>https://dobriak.github.io/tags/tui/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/tui/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ucr</title>
+      <link>https://dobriak.github.io/tags/ucr/</link>
+      <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/ucr/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Universe</title>
+      <link>https://dobriak.github.io/tags/universe/</link>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/universe/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

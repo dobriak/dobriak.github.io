@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Scripting on dobriak::blog </title>
-      <generator uri="https://gohugo.io">Hugo</generator>
-    <link>https://dobriak.github.io/tags/scripting/index.xml</link>
+    <title>Scripting on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/scripting/</link>
+    <description>Recent content in Scripting on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <lastBuildDate>Sat, 28 Oct 2017 13:29:29 -0700</lastBuildDate>
     
+	<atom:link href="https://dobriak.github.io/tags/scripting/index.xml" rel="self" type="application/rss+xml" />
     
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
     
     <item>
       <title>DC/OS on KVM CoreOS VMs</title>
@@ -23,7 +25,7 @@
     <item>
       <title>Automating advanced DC/OS installation.</title>
       <link>https://dobriak.github.io/post/automated-advanced-dcos-installation/</link>
-      <pubDate>Thu, 27 Apr 2017 20:23:50 MST</pubDate>
+      <pubDate>Thu, 27 Apr 2017 20:23:50 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
       <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
@@ -33,4 +35,3 @@
     
   </channel>
 </rss>
-

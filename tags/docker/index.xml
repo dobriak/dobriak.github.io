@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Docker on dobriak::blog </title>
-      <generator uri="https://gohugo.io">Hugo</generator>
-    <link>https://dobriak.github.io/tags/docker/index.xml</link>
+    <title>Docker on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/docker/</link>
+    <description>Recent content in Docker on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <lastBuildDate>Thu, 27 Apr 2017 20:23:50 -0700</lastBuildDate>
     
+	<atom:link href="https://dobriak.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml" />
     
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
     
     <item>
       <title>Automating advanced DC/OS installation.</title>
       <link>https://dobriak.github.io/post/automated-advanced-dcos-installation/</link>
-      <pubDate>Thu, 27 Apr 2017 20:23:50 MST</pubDate>
+      <pubDate>Thu, 27 Apr 2017 20:23:50 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
       <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
@@ -23,7 +25,7 @@
     <item>
       <title>Using Jenkins with a private Docker registry on DC/OS</title>
       <link>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</link>
-      <pubDate>Tue, 25 Apr 2017 22:05:07 MST</pubDate>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</guid>
       <description>&lt;p&gt;In this guide I will walk you through setting up your Jenkins instance to use the private docker registry we set up in the previous blog post.&lt;/p&gt;
@@ -34,7 +36,7 @@
     <item>
       <title>Secure private Docker registry on DC/OS</title>
       <link>https://dobriak.github.io/post/docker-registry-marathonlb-dcos/</link>
-      <pubDate>Mon, 24 Apr 2017 16:45:12 MST</pubDate>
+      <pubDate>Mon, 24 Apr 2017 16:45:12 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/docker-registry-marathonlb-dcos/</guid>
       <description>&lt;p&gt;This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.&lt;/p&gt;
@@ -44,4 +46,3 @@
     
   </channel>
 </rss>
-
