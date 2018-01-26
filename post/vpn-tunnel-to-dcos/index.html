@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Create VPN Tunnel to your DC/OS Cluster - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/vpn-tunnel-to-dcos/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Create VPN Tunnel to your DC/OS Cluster</h1>
+        <span class="post-meta">Jan 25, 2018 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>A frequently asked question is how one can connect their client machine to a DC/OS cluster in such a way that the internal cluster network is locally addressable.</p>
+
+<p></p>
+
+<p>This can be useful when debugging applications and testing functionality at Networking Layer of the <a href="https://en.wikipedia.org/wiki/OSI_model">OSI model</a>.</p>
+
+<p>Another application to such connectivity is the ability to connect remotely, for example from outside of your company&rsquo;s network.</p>
+
+<p>The proposed solution is to install and configure <a href="https://openvpn.net/">OpenVPN</a> server on your DC/OS cluster. Luckily, the DC/OS Universe offers such server with nice RESTful interface on top, so adding and removing VPN users is a breeze.</p>
+
+<p>Please note that this is one way of solving the above problem. This post is for pure hobby or academic purposes and you should definitely not use it in a production environment.</p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS cluster with at least 1 public node accessible over the internet. This article was written using version 1.10 of DC/OS, 1.8 and 1.9 are know to also <a href="https://github.com/dcos/examples/tree/master/openvpn">work</a>.</li>
+<li><a href="https://dcos.io/docs/1.10/usage/cli/install/">DC/OS CLI</a> installed and authenticated against your cluster.</li>
+<li>DC/OS cluster account with super user privileges.</li>
+<li>Your client machine / laptop should have access to the public IP address of your public node. The OpenVPN connection will be offered on port 1194/UDP so you should make sure that this port is not closed to the outside world in your environment.</li>
+<li>OpenVPN client for your machine.</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<p>Create a file called <code>openvpn.json</code> with the following contents:</p>
+
+<pre><code class="language-bash">{
+  &quot;openvpn&quot;: {
+    &quot;framework-name&quot;: &quot;openvpn&quot;,
+    &quot;cpus&quot;: 1,
+    &quot;mem&quot;: 128,
+    &quot;instances&quot;: 1,
+    &quot;admin_port&quot;: 5000,
+    &quot;server_port&quot;: 1194,
+    &quot;ovpn_username&quot;: &quot;&lt;Your admin user name here&gt;&quot;,
+    &quot;ovpn_password&quot;: &quot;&lt;Your admin password here&gt;&quot;
+  }
+}
+</code></pre>
+
+<p>Pass that file as an option to the <code>dcos package</code> command to install the OpenVPN package:</p>
+
+<pre><code class="language-bash">dcos package install --options=openvpn.json openvpn --yes
+</code></pre>
+
+<p>Wait until the installation has finished - it will appear as <code>Running</code> in your DC/OS UI -&gt; Services UI.</p>
+
+<h3 id="operation">Operation</h3>
+
+<p>If the installation was successful you should have an OpenVPN server running on one of your public nodes. The RESTful API will be exposed on https://<Public IP>:5000 and the VPN connection end point will be at UDP <Public IP>:1194.</p>
+
+<h4 id="verify">Verify</h4>
+
+<p>You can check the health of your VPN service by issuing a GET to its <code>/status</code> endpoint:</p>
+
+<pre><code class="language-bash">curl -k https://&lt;Public IP&gt;:5000/status
+</code></pre>
+
+<h4 id="adding-a-vpn-user">Adding a VPN User</h4>
+
+<p>An authenticated POST request to the <code>/client</code> endpoint should do the trick. The interface will respond with the contents of a <code>ovpn</code> file that can be used by the newly created user.</p>
+
+<pre><code class="language-bash">curl -k -u &lt;Your admin username&gt;:&lt;Your admin password&gt; -X POST -d &quot;name=&lt;VPN user name&gt;&quot; https://&lt;Public IP&gt;:5000/client &gt; &lt;VPN user name&gt;.ovpn
+</code></pre>
+
+<p>Using the <code>ovpn</code> file, a user can now connect to your OpenVPN server and have access to the internal DC/OS network:</p>
+
+<pre><code class="language-bash">[vpn-user-laptop]sudo openvpn --config &lt;VPN user name&gt;.ovpn &amp;
+[vpn-user-laptop]ping -c 3 &lt;Any internal IP address&gt;
+</code></pre>
+
+<h4 id="removing-a-vpn-user">Removing a VPN User</h4>
+
+<p>In a similar fashion, removing a VPN user is just a curl away:</p>
+
+<pre><code class="language-bash">curl -k -u &lt;Your admin username&gt;:&lt;Your admin password&gt; -X DELETE https://&lt;Public IP&gt;:5000/client/&lt;VPN user name&gt;
+</code></pre>
+
+<h3 id="openvpn-removal">OpenVPN removal</h3>
+
+<p>You can only remove that package from the command line:</p>
+
+<pre><code class="language-bash">dcos package uninstall openvpn --app-id=/openvpn
+</code></pre>
+
+<p><em>Notes:</em></p>
+
+<ul>
+<li>If port 5000/TCP is not publicly accessible, the same RESTful calls can be made from inside any master or agent node, just substitute <code>&lt;Public IP&gt;</code> with your private IP address.</li>
+<li>The admin username and password are stored in Zookeeper. They will be reused during a re-spawn if for any reason the OpenVPN server instance is destroyed. If you would like to uninstall OpenVPN, as a best practice, make sure to remove the <code>/openvpn</code> data node in Zookeeper as well.</li>
+</ul>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/openvpn">openvpn</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/vpn">vpn</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Openvpn on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/openvpn/</link>
+    <description>Recent content in Openvpn on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 25 Jan 2018 17:56:03 -0700</lastBuildDate>
+    
+	<atom:link href="https://dobriak.github.io/tags/openvpn/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Create VPN Tunnel to your DC/OS Cluster</title>
+      <link>https://dobriak.github.io/post/vpn-tunnel-to-dcos/</link>
+      <pubDate>Thu, 25 Jan 2018 17:56:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/vpn-tunnel-to-dcos/</guid>
+      <description>&lt;p&gt;A frequently asked question is how one can connect their client machine to a DC/OS cluster in such a way that the internal cluster network is locally addressable.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

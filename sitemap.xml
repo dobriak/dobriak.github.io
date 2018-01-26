@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://dobriak.github.io/post/vpn-tunnel-to-dcos/</loc>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/post/kubernetes-dcos-beta/</loc>
     <lastmod>2017-10-28T18:13:41-07:00</lastmod>
   </url>
@@ -95,7 +100,7 @@
   
   <url>
     <loc>https://dobriak.github.io/tags/dcos/</loc>
-    <lastmod>2017-10-28T18:13:41-07:00</lastmod>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -167,7 +172,13 @@
   
   <url>
     <loc>https://dobriak.github.io/categories/networking/</loc>
-    <lastmod>2017-07-18T22:00:33-07:00</lastmod>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://dobriak.github.io/tags/openvpn/</loc>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -185,7 +196,7 @@
   
   <url>
     <loc>https://dobriak.github.io/post/</loc>
-    <lastmod>2017-10-28T18:13:41-07:00</lastmod>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -262,8 +273,14 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/vpn/</loc>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/</loc>
-    <lastmod>2017-10-28T18:13:41-07:00</lastmod>
+    <lastmod>2018-01-25T17:56:03-07:00</lastmod>
     <priority>0</priority>
   </url>
   

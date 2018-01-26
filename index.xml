@@ -7,7 +7,18 @@
     <language>en-us</language>
     
     
-    <updated>Sat, 28 Oct 2017 18:13:41 MST</updated>
+    <updated>Thu, 25 Jan 2018 17:56:03 MST</updated>
+    
+    <item>
+      <title>Create VPN Tunnel to your DC/OS Cluster</title>
+      <link>https://dobriak.github.io/post/vpn-tunnel-to-dcos/</link>
+      <pubDate>Thu, 25 Jan 2018 17:56:03 MST</pubDate>
+      
+      <guid>https://dobriak.github.io/post/vpn-tunnel-to-dcos/</guid>
+      <description>&lt;p&gt;A frequently asked question is how one can connect their client machine to a DC/OS cluster in such a way that the internal cluster network is locally addressable.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Install Kubernetes on DC/OS (beta)</title>
