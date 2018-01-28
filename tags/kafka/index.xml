@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kafka on dobriak::blog</title>
+    <link>https://dobriak.github.io/tags/kafka/</link>
+    <description>Recent content in Kafka on dobriak::blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 27 Jan 2018 12:34:45 -0700</lastBuildDate>
+    
+	<atom:link href="https://dobriak.github.io/tags/kafka/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Secure Kafka Install on DC/OS</title>
+      <link>https://dobriak.github.io/post/secure-kafka-install/</link>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/secure-kafka-install/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://kafka.apache.org/&#34;&gt;Apache Kafka&lt;/a&gt; is a distributed high-throughput publish-subscribe messaging system with strong ordering guarantees. Kafka clusters are highly available, fault tolerant, and very durable. DC/OS offers a &lt;a href=&#34;https://github.com/dcos/examples/tree/master/kafka/1.10&#34;&gt;single click install&lt;/a&gt; of Kafka as a framework which is great for trying out. When it comes to actually using it in a Dev/Test/Production environment, you should definitely consider securing your Kafka installation. You will be required to do so if you are running your DC/OS EE cluster in &lt;code&gt;strict&lt;/code&gt; mode.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

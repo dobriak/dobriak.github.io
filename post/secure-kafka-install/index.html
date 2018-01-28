@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Secure Kafka Install on DC/OS - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/secure-kafka-install/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Secure Kafka Install on DC/OS</h1>
+        <span class="post-meta">Jan 27, 2018 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p><a href="https://kafka.apache.org/">Apache Kafka</a> is a distributed high-throughput publish-subscribe messaging system with strong ordering guarantees. Kafka clusters are highly available, fault tolerant, and very durable. DC/OS offers a <a href="https://github.com/dcos/examples/tree/master/kafka/1.10">single click install</a> of Kafka as a framework which is great for trying out. When it comes to actually using it in a Dev/Test/Production environment, you should definitely consider securing your Kafka installation. You will be required to do so if you are running your DC/OS EE cluster in <code>strict</code> mode.</p>
+
+<p>
+Luckily, the Enterprise version of DC/OS comes with tooling that simplifies secure installation and usage of Kafka.</p>
+
+<p>There are many possible configuration combinations, so here I will present the one that I encounter the most and is by design an excellent starting point for new users. It also represents service usage best practices of compartmentalization and security.</p>
+
+<h3 id="planning">Planning</h3>
+
+<p>Let&rsquo;s assume we have a team in our organization (let&rsquo;s call it <strong>coolteam</strong>) that would like to use Kafka for their applications and that they would like their own instance.</p>
+
+<p>Following steps will be taken to achieve our goal:</p>
+
+<ul>
+<li>Provision a service account that can only interact with Kafka.</li>
+<li>Create namespace for our team and establish an easy way of adding team members to it.</li>
+<li>Grant appropriate permissions to that namespace.</li>
+<li>Make use of external ZooKeeper for increased capacity (default installation uses the system ZooKeeper instance).</li>
+</ul>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS Enterprise Edition cluster version 1.10 and up. At least 4 private nodes with sufficient resources (at least: 2 vCPUs, 4GB memory, 10GB disk).</li>
+<li>DC/OS Enterprise Edition CLI installed and configured.</li>
+<li>Superuser access to create service accounts and configure access permissions.</li>
+<li>Ability to SSH into master nodes to perform initial validation.</li>
+<li>Ability to run python scripts or use <a href="https://stedolan.github.io/jq/">jq</a> processor.</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<p>Create a <code>coolteam</code> namespace for our team. Also, create a default user and assign it to said group:</p>
+
+<pre><code class="language-bash">TEAM=&quot;coolteam&quot;
+KROLE=${TEAM}'__kafka-role'
+TKN=$(dcos config show core.dcos_acs_token)
+URL=$(dcos config show core.dcos_url)
+
+dcos package install --cli dcos-enterprise-cli --yes
+dcos security org groups create ${TEAM}
+dcos security org users create -d &quot;Default ${TEAM} user&quot; -p &quot;sup3rs3cr3T&quot; ctuser
+dcos security org groups add_user ${TEAM} ctuser
+
+dcos security org groups grant ${TEAM} dcos:adminrouter:service:marathon full
+dcos security org groups grant ${TEAM} dcos:service:marathon:marathon:services:/${TEAM} full
+dcos security org groups grant ${TEAM} dcos:adminrouter:ops:mesos full
+dcos security org groups grant ${TEAM} dcos:adminrouter:ops:slave full
+</code></pre>
+
+<p>Adding any other members would follow the same pattern:</p>
+
+<pre><code class="language-bash">dcos security org groups add_user ${TEAM} &lt;another-user-id&gt;
+</code></pre>
+
+<p>Now, once we have the ability to associate users to the coolteam group, let&rsquo;s work on creating a service account and a secret using our Enterprise Edition DC/OS CLI:</p>
+
+<pre><code class="language-bash"># Get our certificate authority
+curl -k ${URL}/ca/dcos-ca.crt -o dcos-ca.crt
+
+# Create service account
+dcos security org service-accounts keypair ${TEAM}-priv.pem ${TEAM}-pub.pem
+chmod 400 ${TEAM}-pub.pem
+dcos security org service-accounts create -p ${TEAM}-pub.pem -d &quot;CoolTeam Kafka service account&quot; ${TEAM}
+dcos security org service-accounts show ${TEAM}
+
+dcos security secrets create-sa-secret ${TEAM}-priv.pem ${TEAM} ${TEAM}/kafka
+# Use --strict if running in strict security mode
+#dcos security secrets create-sa-secret --strict ${TEAM}-priv.pem ${TEAM} ${TEAM}/kafka
+dcos security secrets list ${TEAM}
+
+# Create
+# Next line not needed if running in strict mode
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:task:user:nobody -d '{&quot;description&quot;:&quot;Allows Linux user nobody to execute tasks&quot;}' -H 'Content-Type: application/json'
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:framework:role:${KROLE} -d '{&quot;description&quot;:&quot;Controls the ability of '${KROLE}' to register as a framework with the Mesos master&quot;}' -H 'Content-Type: application/json'
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:reservation:role:${KROLE} -d '{&quot;description&quot;:&quot;Controls the ability of '${KROLE}' to reserve resources&quot;}' -H 'Content-Type: application/json'
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:volume:role:${KROLE} -d '{&quot;description&quot;:&quot;Controls the ability of '${KROLE}' to access volumes&quot;}' -H 'Content-Type: application/json'
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:reservation:principal:${TEAM} -d '{&quot;description&quot;:&quot;Controls the ability of '${TEAM}' to reserve resources&quot;}' -H 'Content-Type: application/json'
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:volume:principal:${TEAM} -d '{&quot;description&quot;:&quot;Controls the ability of '${TEAM}' to access volumes&quot;}' -H 'Content-Type: application/json'
+
+# Grant
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:framework:role:${KROLE}/users/${TEAM}/create
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:reservation:role:${KROLE}/users/${TEAM}/create
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:volume:role:${KROLE}/users/${TEAM}/create
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:task:user:nobody/users/${TEAM}/create
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:reservation:principal:${TEAM}/users/${TEAM}/delete
+curl -X PUT --cacert dcos-ca.crt -H &quot;Authorization: token=${TKN}&quot; ${URL}/acs/api/v1/acls/dcos:mesos:master:volume:principal:${TEAM}/users/${TEAM}/delete
+
+# Currently, this is required for TLS to work
+dcos security org users grant coolteam dcos:superuser full
+
+</code></pre>
+
+<p>Now, let&rsquo;s enable SSL encryption.</p>
+
+<pre><code class="language-bash"># Using our CA, generate a signed certificate
+openssl genrsa -out auth_priv.key 2048
+openssl req -new -sha256 -key auth_priv.key -out auth_request.csr -subj &quot;/C=US/ST=WA/L=Seattle/O=coolteam/OU=dev/CN=nuc5.lan&quot;
+encoded=$(awk '{printf &quot;%s\\n&quot;, $0}' auth_request.csr)
+cat &gt; auth_request.csr.json &lt;&lt; EOF
+{
+  &quot;certificate_request&quot;:&quot;${encoded}&quot;
+}
+EOF
+curl -X POST --cacert dcos-ca.crt -H &quot;Content-Type: application/json&quot; -H &quot;Authorization: token=${TKN}&quot; ${URL}/ca/api/v2/sign -d @auth_request.csr.json &gt; auth_request.csr.result
+# Parse with Python
+#cat auth_request.csr.result | python -c 'import  sys,json;j=sys.stdin.read();print(json.loads(j))[&quot;result&quot;][&quot;certificate&quot;]' &gt; auth_request.crt
+# Or parse with jq
+cat auth_request.csr.result | jq -r .result.certificate | sed -E 's/\\n/\n/g' &gt; auth_request.crt
+</code></pre>
+
+<p>Create custom options file for our kafka installation:</p>
+
+<pre><code class="language-bash">cat &gt; coolteam-kafka.json &lt;&lt; EOF
+{
+  &quot;service&quot;: {
+    &quot;name&quot;: &quot;${TEAM}/kafka&quot;,
+    &quot;placement_strategy&quot;: &quot;NODE&quot;,
+    &quot;service_account&quot;: &quot;${TEAM}&quot;,
+    &quot;service_account_secret&quot;: &quot;${TEAM}/kafka&quot;,
+    &quot;security&quot;: {
+      &quot;transport_encryption&quot;: {
+        &quot;enabled&quot;: true
+      },
+      &quot;ssl_authentication&quot;: {
+        &quot;enabled&quot;: true
+      }
+    }
+  },
+  &quot;kafka&quot;: {
+    &quot;delete_topic_enable&quot;: true,
+    &quot;log_retention_hours&quot;: 128,
+    &quot;kafka_zookeeper_uri&quot;: &quot;zookeeper-0-server.kafka-zookeeper.autoip.dcos.thisdcos.directory:1140,zookeeper-1-server.kafka-zookeeper.autoip.dcos.thisdcos.directory:1140,zookeeper-2-server.kafka-zookeeper.autoip.dcos.thisdcos.directory:1140&quot;
+  }
+}
+EOF
+</code></pre>
+
+<p>Start the installation of Kafka and wait until all brokers finish installing:</p>
+
+<pre><code class="language-bash">dcos package install beta-kafka-zookeeper --yes
+</code></pre>
+
+<p>Monitor the UI, wait until all ZooKeeper nodes are in a healthy state at <code>Services &gt; kafka-zookeeper</code></p>
+
+<pre><code class="language-bash">dcos package install --options=coolteam-kafka.json beta-kafka --yes
+</code></pre>
+
+<p>Monitor the UI, wait until all kafka brokers are in a healthy state at <code>Services &gt; coolteam &gt; kafka</code></p>
+
+<h3 id="verification">Verification</h3>
+
+<p>To verify the new local user access, please log out of your superuser account and log in as <code>ctuser \ sup3rs3cr3T</code>. As ctuser, you should only be allowed to interact with services running in the <code>/coolteam</code> namespace. When done verifying, please switch back to the superuser account.</p>
+
+<p>Query the DC/OS CLI about our TLS secured Kafka VIP address:</p>
+
+<pre><code class="language-bash">[laptop]$ dcos beta-kafka --name=/coolteam/kafka endpoints broker-tls
+{
+  &quot;address&quot;: [
+    &quot;10.0.1.85:1026&quot;,
+    &quot;10.0.2.194:1026&quot;,
+    &quot;10.0.1.27:1025&quot;
+  ],
+  &quot;dns&quot;: [
+    &quot;kafka-0-broker.coolteamkafka.autoip.dcos.thisdcos.directory:1026&quot;,
+    &quot;kafka-1-broker.coolteamkafka.autoip.dcos.thisdcos.directory:1026&quot;,
+    &quot;kafka-2-broker.coolteamkafka.autoip.dcos.thisdcos.directory:1025&quot;
+  ],
+  &quot;vip&quot;: &quot;broker-tls.coolteamkafka.l4lb.thisdcos.directory:9093&quot;
+}
+</code></pre>
+
+<p>Find the IP address of your leading master node and scp some files to it:</p>
+
+<pre><code class="language-bash">[laptop]$ scp -i /path/to/key  auth_priv.key auth_request.crt &lt;user&gt;@&lt;master IP address&gt;:
+[laptop]$ ssh -i /path/to/key &lt;user&gt;@&lt;master IP address&gt;
+
+[master]$ cp /run/dcos/pki/CA/ca-bundle.crt .
+# Enter &quot;export&quot; when prompted for password
+[master]$ openssl pkcs12 -export -in auth_request.crt -inkey auth_priv.key -out keypair.p12 -name keypair -CAfile ca-bundle.crt -caname root
+[master]$ docker run --rm -ti -v /home/core:/tmp -w /opt/kafka/bin wurstmeister/kafka bash
+
+[kafka]$ keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore /tmp/keystore.jks -srckeystore /tmp/keypair.p12 -srcstoretype PKCS12 -srcstorepass export -alias keypair
+# Answer &quot;yes&quot; to &quot;Trust this certificate?&quot;
+[kafka]$ keytool -import -trustcacerts -alias root -file /tmp/ca-bundle.crt -storepass changeit  -keystore /tmp/truststore.jks
+[kafka]$ cat &gt;/tmp/client.properties &lt;&lt; EOL
+security.protocol = SSL
+ssl.truststore.location = /tmp/truststore.jks
+ssl.truststore.password = changeit
+ssl.keystore.location = /tmp/keystore.jks
+ssl.keystore.password = changeit
+EOL
+</code></pre>
+
+<p>Open another terminal window and SSH into the same master node. Start another bash environment with the same <code>wurstmeister/kafka</code> docker image (kafka2 below). Start a producer service in the first session and a consumer in the other:</p>
+
+<pre><code class="language-bash"># Producer
+[kafka]$ ./kafka-console-producer.sh --broker-list broker-tls.coolteamkafka.l4lb.thisdcos.directory:9093   --topic test --producer.config /tmp/client.properties
+
+# Consumer
+[kafka2]$ ./kafka-console-consumer.sh --bootstrap-server broker-tls.coolteamkafka.l4lb.thisdcos.directory:9093  --topic test --consumer.config /tmp/client.properties
+</code></pre>
+
+<p>It will take couple of minutes before a topic leader is elected and the consumer may complain about LEADER_NOT_AVAILABLE, just wait a bit before sending any messages from the producer.</p>
+
+<p>Done! You have successfully configured TLS encrypted communications in your DC/OS Kafka cluster and you have done that following best practices, using a service account and creating a separate namespace (folder) for your team! Way to go!</p>
+
+<p>For a good description on how to connect various clients (golang, c++, python, .Net, java), please visit the <a href="https://docs.mesosphere.com/services/beta-kafka/2.1.1-1.0.0-beta/connecting-clients/">documentation website</a>.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/kafka">kafka</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/security">security</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/service-account">service-account</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

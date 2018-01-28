@@ -59,7 +59,7 @@
     <item>
       <title>Dcos</title>
       <link>https://dobriak.github.io/tags/dcos/</link>
-      <pubDate>Thu, 25 Jan 2018 17:56:03 -0700</pubDate>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/dcos/</guid>
       <description></description>
@@ -98,6 +98,15 @@
       <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/jenkins/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kafka</title>
+      <link>https://dobriak.github.io/tags/kafka/</link>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/kafka/</guid>
       <description></description>
     </item>
     
@@ -197,6 +206,24 @@
       <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/sdn/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Security</title>
+      <link>https://dobriak.github.io/tags/security/</link>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/security/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Service Account</title>
+      <link>https://dobriak.github.io/tags/service-account/</link>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/service-account/</guid>
       <description></description>
     </item>
     

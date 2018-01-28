@@ -7,7 +7,16 @@
     <language>en-us</language>
     
     
-    <updated>Thu, 25 Jan 2018 17:56:03 MST</updated>
+    <updated>Sat, 27 Jan 2018 12:34:45 MST</updated>
+    
+    <item>
+      <title>Secure Kafka Install on DC/OS</title>
+      <link>https://dobriak.github.io/post/secure-kafka-install/</link>
+      <pubDate>Sat, 27 Jan 2018 12:34:45 MST</pubDate>
+      
+      <guid>https://dobriak.github.io/post/secure-kafka-install/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://kafka.apache.org/&#34;&gt;Apache Kafka&lt;/a&gt; is a distributed high-throughput publish-subscribe messaging system with strong ordering guarantees. Kafka clusters are highly available, fault tolerant, and very durable. DC/OS offers a &lt;a href=&#34;https://github.com/dcos/examples/tree/master/kafka/1.10&#34;&gt;single click install&lt;/a&gt; of Kafka as a framework which is great for trying out. When it comes to actually using it in a Dev/Test/Production environment, you should definitely consider securing your Kafka installation. You will be required to do so if you are running your DC/OS EE cluster in &lt;code&gt;strict&lt;/code&gt; mode.&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Create VPN Tunnel to your DC/OS Cluster</title>
