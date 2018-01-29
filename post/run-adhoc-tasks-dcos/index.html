@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Run Adhoc Tasks on DC/OS - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/run-adhoc-tasks-dcos/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Run Adhoc Tasks on DC/OS</h1>
+        <span class="post-meta">Jan 28, 2018 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>DC/OS can run Marathon or Kubernetes for orchestrating long running tasks and Metronome / Chronos for scheduled ones. That leaves space for a mechanism to run ad-hoc tasks that do not need to be treated as long running nor scheduled ones.</p>
+
+<p></p>
+
+<p>To address this gap we can easily install and use <a href="https://github.com/eremetic-framework/eremetic">Eremetic</a></p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS cluster version 1.10+</li>
+<li>DC/OS CLI installed and configured</li>
+<li>Ability to SSH into any node.</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<p>Eremetic can easily be installed from the DC/OS Catalog or the CLI.</p>
+
+<pre><code class="language-bash">[laptop]$ dcos package install eremetic --yes
+By Deploying, you agree to the Terms and Conditions https://mesosphere.com/catalog-terms-conditions/#community-services
+This DC/OS Service is currently in preview. There may be bugs, incomplete features, incorrect documentation, or other discrepancies. Preview packages should never be used in production!
+Installing Marathon app for package [eremetic] version [0.27.0-0.0.1]
+DC/OS Eremetic service has been installed. You can access the API within the cluster at http://eremetic.marathon.l4lb.thisdcos.directory:8000 or outside the cluster at https://&lt;dcos-master&gt;/service/eremetic/.
+
+New User Tutorial: https://github.com/dcos/examples/tree/master/eremetic
+</code></pre>
+
+<h3 id="operation">Operation</h3>
+
+<p>To run an ad-hoc task, one can use the UI that comes with the framework. It will be available at <code>http://&lt;master IP&gt;/service/eremetic/</code>.</p>
+
+<p><img src="https://dobriak.github.io/images/eremetic-ui.png" alt="EremeticUI" /></p>
+
+<p>Eremetic can also be interacted with programatically. It exposes a RESTful interface that allows for easy operation:</p>
+
+<pre><code class="language-bash">[laptop]$ eval `ssh-agent`; ssh-add /path/to/key
+[laptop]$ dcos node ssh --leader --master-proxy
+
+[master]$ task_id=$(curl -H &quot;Content-type: application/json&quot; -X POST -d  '{&quot;docker_image&quot;:&quot;busybox&quot;,&quot;command&quot;:&quot;date&quot;,&quot;task_cpus&quot;:0.1,&quot;task_mem&quot;:100}'  http://eremetic.marathon.l4lb.thisdcos.directory:8000/task)
+# Inspect the status of our task
+[master]$ curl http://eremetic.marathon.l4lb.thisdcos.directory:8000/task/${task_id} | jq .
+{
+  &quot;task_cpus&quot;: 0.1,
+  &quot;task_mem&quot;: 100,
+  &quot;command&quot;: &quot;date&quot;,
+  &quot;args&quot;: null,
+  &quot;user&quot;: &quot;root&quot;,
+  &quot;env&quot;: null,
+  &quot;masked_env&quot;: null,
+  &quot;image&quot;: &quot;busybox&quot;,
+  &quot;volumes&quot;: null,
+  &quot;ports&quot;: null,
+  &quot;status&quot;: [
+    {
+      &quot;time&quot;: 1517192445,
+      &quot;status&quot;: &quot;TASK_QUEUED&quot;
+    },
+    {
+      &quot;time&quot;: 1517192446,
+      &quot;status&quot;: &quot;TASK_STAGING&quot;
+    },
+    {
+      &quot;time&quot;: 1517192449,
+      &quot;status&quot;: &quot;TASK_RUNNING&quot;
+    },
+    {
+      &quot;time&quot;: 1517192449,
+      &quot;status&quot;: &quot;TASK_FINISHED&quot;
+    }
+  ],
+  &quot;id&quot;: &quot;eremetic-task.0ec1ed88-2bde-47ec-aa46-a867686fa3fe&quot;,
+  &quot;name&quot;: &quot;Eremetic task k7Ml7bZ5&quot;,
+  &quot;network&quot;: &quot;&quot;,
+  &quot;dns&quot;: &quot;&quot;,
+  &quot;framework_id&quot;: &quot;eremetic1&quot;,
+  &quot;slave_id&quot;: &quot;d9a24214-7d0c-4255-a38d-d0f4eba2a13c-S1&quot;,
+  &quot;slave_constraints&quot;: null,
+  &quot;hostname&quot;: &quot;10.0.0.249&quot;,
+  &quot;retry&quot;: 0,
+  &quot;callback_uri&quot;: &quot;&quot;,
+  &quot;sandbox_path&quot;: &quot;/var/lib/mesos/slave/slaves/d9a24214-7d0c-4255-a38d-d0f4eba2a13c-S1/frameworks/eremetic1/executors/eremetic-task.0ec1ed88-2bde-47ec-aa46-a867686fa3fe/runs/715c5f99-0a92-40dd-ace8-dda8ea1b92cc&quot;,
+  &quot;agent_ip&quot;: &quot;10.0.0.249&quot;,
+  &quot;agent_port&quot;: 5051,
+  &quot;force_pull_image&quot;: false,
+  &quot;fetch&quot;: null
+}
+</code></pre>
+
+<h3 id="uninstall">Uninstall</h3>
+
+<p>Uninstalling Eremetic is also very straight forward:</p>
+
+<pre><code class="language-bash">[laptop]$ dcos package uninstall eremetic --yes
+Uninstalled package [eremetic] version [0.27.0-0.0.1]
+DC/OS Eremetic service has been uninstalled.
+</code></pre>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/eremetic">eremetic</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/ad-hoc">ad-hoc</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+
