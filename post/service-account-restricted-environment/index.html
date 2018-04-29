@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>DC/OS Service Accounts in Restricted Environments - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/service-account-restricted-environment/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">DC/OS Service Accounts in Restricted Environments</h1>
+        <span class="post-meta">Apr 29, 2018 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>We are so used to having handy little pieces of software that help us do our jobs better. If you too work in the DevOps world and write automation for infrastructure or software (or pretty much anything else) you would know what I mean. Take <code>jq</code> for an example: can you imagine writing any sort of shell script that interacts with any JSON producing API and <em>NOT</em> use good ole trustworthy <code>jq</code>?</p>
+
+<p>Now, imagine you are writing such automation script for BigCompany &trade; and your environment is air gapped and you can not install <code>jq</code> or <code>python</code> or <code>nifty-help-tool</code>.</p>
+
+<p><em>What do you do?</em></p>
+
+<p>Well you revert to basics.</p>
+
+<p>Had to solve exactly that kind of problem for a client, so I though I should jot down my notes in hopes that might be helpful to someone else down the line.</p>
+
+<p></p>
+
+<h3 id="the-problem">The Problem</h3>
+
+<p>BigCompany &trade; would like to integrate their external CI/CD pipeline with their DC/OS cluster in such a way that they can automatically launch container instances on the cluster as soon as the pipeline finishes running and new Docker image is built and pushed to their repository.</p>
+
+<p>Such integration is very common and fairly easy to set up if the CI/CD pipeline is running inside of DC/OS. You get to use the native service discovery mechanisms available to you and it is just a matter of configuring a plugin and clicking &ldquo;Deploy&rdquo;.</p>
+
+<p>In our case though, the pipeline location and its configuration are not negotiable.</p>
+
+<p>Also, here is the kicker: I am not allowed to install any helpers such as <code>jq</code> or even <code>pyhton</code> on the machines that will run the integration jobs.</p>
+
+<p>The main problem here is: when working with DC/OS service accounts one needs to programmatically interact with its security service. The process looks like so:</p>
+
+<ul>
+<li>Using your service account and its associated private key you create a claim that you post to said API</li>
+<li>DC/OS responds with a blob of JSON data you have to parse to get a token.</li>
+<li>Using that extracted token your service account can now interact with the rest of the DC/OS cluster (depending on a set of permissions)</li>
+<li>All tokens have a lifespan of about 5 days. Upon expiration, run through the first 3 steps to renew our expired token.</li>
+</ul>
+
+<p>Now, if we were lucky enough to have <code>jq</code> or <code>python</code> available to us, we could have just relied on their magic to create, sign and parse JWT data. All of this would have been encapsulated in a few lines of code.</p>
+
+<h3 id="the-solution">The Solution</h3>
+
+<p>We will start with the set up part first. We will first create a service group in Marathon called <code>dev</code> that will hold all of our development environment services.</p>
+
+<p>Next, we will create a service account that will be used to spin up and destroy container instances in our <code>dev</code> group (only!). Along with that, we will create a public and private key pair that can be used to sign token claims.</p>
+
+<p>Finally, using the generated files, we will write a script that can be run as a job (plan step) on the external pipeline that will implement the workflow described in the &ldquo;Problem&rdquo; section.</p>
+
+<h4 id="prerequisites">Prerequisites</h4>
+
+<ul>
+<li>DC/OS Enterprise Edition version 1.11.x or newer</li>
+<li>Machine (let&rsquo;s call it laptop) that has the DC/OS CLI installed and configured with a super user account</li>
+</ul>
+
+<h4 id="preparation-on-your-laptop">Preparation - on your laptop</h4>
+
+<p>Using the DC/OS CLI create a <code>dev</code> Marathon group</p>
+
+<pre><code class="language-bash">echo '{&quot;id&quot;:&quot;/dev&quot;}' &gt; dev-group.json
+dcos marathon group add &lt; dev-group.json
+</code></pre>
+
+<p>Create service account, keys</p>
+
+<pre><code class="language-bash">SERVICE_PRINCIPAL=&quot;bamboo&quot;
+NAMESPACE=&quot;dev&quot;
+
+# Installing EE cli
+dcos package install --cli dcos-enterprise-cli --yes
+
+# Get root CA
+curl -k -v $(dcos config show core.dcos_url)/ca/dcos-ca.crt -o dcos-ca.crt
+
+# Create pub / priv keys
+dcos security org service-accounts keypair ${SERVICE_PRINCIPAL}-priv.pem ${SERVICE_PRINCIPAL}-pub.pem
+chmod 400 ${SERVICE_PRINCIPAL}-pub.pem
+
+# Create service account
+dcos security org service-accounts create -p ${SERVICE_PRINCIPAL}-pub.pem -d &quot;DCOS service account for external integration&quot; ${SERVICE_PRINCIPAL}
+dcos security org service-accounts show ${SERVICE_PRINCIPAL}
+
+# Create secret if you will be using it from inside of DC/OS, so you won't need to distribute the private keys.
+dcos security secrets create-sa-secret ${SERVICE_PRINCIPAL}-priv.pem ${SERVICE_PRINCIPAL} as_secret_${SERVICE_PRINCIPAL}
+
+# Grant permissions
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:ops:mesos full
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:ops:slave full
+# Assign appropriate permissions depending on the purpose of the service account
+# In our case, I want my service account SERVICE_PRINCIPAL to have full
+# control over apps running in the Marathon NAMESPACE service group
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:service:marathon full
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:service:marathon:marathon:services:/${NAMESPACE} full
+
+</code></pre>
+
+<h4 id="script-to-run-in-your-restricted-environment">Script to run in your restricted environment</h4>
+
+<p>Now with the service account created and assigned appropriate permissions, let&rsquo;s create a BASH script that will create a JWT claim and use it to request an authentication token.</p>
+
+<p>The script is going to use the private key associated with the service account to sign the claim, and it has no external dependencies other than the (linux standard) <code>openssl</code>.</p>
+
+<p>Make sure to enter your master node IP (or URL if behind a load balancer) and the name of your service account. You can also pass the account name and the contents of the private key as environment variables (<code>SA_NAME</code> and <code>SA_SECRET</code>)</p>
+
+<pre><code>#!/bin/bash
+set -o pipefail
+# get_sa_token.sh - run inside your restricted environment
+# Create RS256 JWT claim for a service account
+# and get an auth token based on it.
+# Not using any external binaries (jq,python).
+
+# Inspired by https://stackoverflow.com/questions/46657001/how-do-you-create-an-rs256-jwt-assertion-with-bash-shell-scripting/46672439#46672439
+MASTER_URL=&quot;&lt;Master.IP.or.URL&gt;&quot;
+svc_account=${SA_NAME:-&quot;bamboo&quot;}
+private_key=&quot;${svc_account}-priv.pem&quot;
+secret=${SA_SECRET:-&quot;$(cat ${private_key})&quot;}
+
+b64enc() { openssl enc -base64 -A | tr '+/' '-_' | tr -d '='; }
+rs_sign() { openssl dgst -binary -sha256 -sign &lt;(printf '%s\n' &quot;$1&quot;); }
+
+# Claim header and payload
+header='{&quot;typ&quot;:&quot;JWT&quot;,&quot;alg&quot;:&quot;RS256&quot;}'
+payload='{&quot;uid&quot;:&quot;'${svc_account}'&quot;}'
+
+signed_content=&quot;$(printf %s &quot;$header&quot; | b64enc).$(printf %s &quot;$payload&quot; | b64enc)&quot;
+sig=$(printf %s &quot;$signed_content&quot; | rs_sign &quot;$secret&quot; | b64enc)
+claim=$(printf '%s.%s' &quot;${signed_content}&quot; &quot;${sig}&quot;)
+
+echo '{&quot;uid&quot;:&quot;'${svc_account}'&quot;,&quot;token&quot;:&quot;'${claim}'&quot;}' &gt; login_token.json
+# Request auth token based on the claim
+curl --cacert dcos-ca.crt -X POST -H &quot;content-type:application/json&quot; -d @login_token.json  ${MASTER_URL}/acs/api/v1/auth/login &gt; authorization_token.json
+# Get just the token part from the json response (no jq)
+token=$(cat authorization_token.json | grep &quot;token&quot; | cut -d':' -f2 | tr -d '&quot;' | tr -d [:space:])
+echo &quot;${token}&quot; &gt; token
+
+# Cleanup
+rm login_token.json authorization_token.json
+echo &quot;Done.&quot;
+</code></pre>
+
+<p>Please note that all authentication tokens have a lifespan of 5 days. When the token expires API calls will return a <code>401 Unauthorized</code> error, and you can programmatically catch it and deal with it, for example you can just re-run the script to get a fresh token.</p>
+
+<p>Now, using the auth token stored in <code>token</code> you can interact with DC/OS services and APIs as allowed by the service account permissions. In our case we assigned permissions that should let us spin up apps in Marathon&rsquo;s <code>/dev</code> service group, so to test our set up we can do something like:</p>
+
+<pre><code class="language-bash">echo '{
+  &quot;id&quot;: &quot;/dev/testapp&quot;,
+  &quot;instances&quot;: 1,
+  &quot;portDefinitions&quot;: [],
+  &quot;container&quot;: {
+    &quot;type&quot;: &quot;DOCKER&quot;,
+    &quot;volumes&quot;: [],
+    &quot;docker&quot;: {
+      &quot;image&quot;: &quot;nginx&quot;
+    }
+  },
+  &quot;cpus&quot;: 0.1,
+  &quot;mem&quot;: 128,
+  &quot;requirePorts&quot;: false,
+  &quot;networks&quot;: [],
+  &quot;healthChecks&quot;: [],
+  &quot;fetch&quot;: [],
+  &quot;constraints&quot;: []
+}' &gt; testapp.json
+
+curl --cacert dcos-ca.crt -H &quot;Content-type: application/json&quot; -H &quot;Authorization: token=$(cat token)&quot; -X POST ${MASTER_URL}/service/marathon/v2/apps -d @testapp.json
+</code></pre>
+
+<p>That&rsquo;s it! You should now be able to use DC/OS service accounts to interact with services and APIs even in completely locked down environments.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/service-account">service-account</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/restricted-environment">restricted-environment</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/JWT">JWT</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/openssl">openssl</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

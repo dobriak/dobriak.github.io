@@ -6,10 +6,29 @@
     <description>Recent content in Automation on dobriak::blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 28 Oct 2017 13:29:29 -0700</lastBuildDate>
+    <lastBuildDate>Sun, 29 Apr 2018 15:44:45 -0700</lastBuildDate>
     
 	<atom:link href="https://dobriak.github.io/categories/automation/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>DC/OS Service Accounts in Restricted Environments</title>
+      <link>https://dobriak.github.io/post/service-account-restricted-environment/</link>
+      <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/service-account-restricted-environment/</guid>
+      <description>&lt;p&gt;We are so used to having handy little pieces of software that help us do our jobs better. If you too work in the DevOps world and write automation for infrastructure or software (or pretty much anything else) you would know what I mean. Take &lt;code&gt;jq&lt;/code&gt; for an example: can you imagine writing any sort of shell script that interacts with any JSON producing API and &lt;em&gt;NOT&lt;/em&gt; use good ole trustworthy &lt;code&gt;jq&lt;/code&gt;?&lt;/p&gt;
+
+&lt;p&gt;Now, imagine you are writing such automation script for BigCompany &amp;trade; and your environment is air gapped and you can not install &lt;code&gt;jq&lt;/code&gt; or &lt;code&gt;python&lt;/code&gt; or &lt;code&gt;nifty-help-tool&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;What do you do?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Well you revert to basics.&lt;/p&gt;
+
+&lt;p&gt;Had to solve exactly that kind of problem for a client, so I though I should jot down my notes in hopes that might be helpful to someone else down the line.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>DC/OS on KVM CoreOS VMs</title>

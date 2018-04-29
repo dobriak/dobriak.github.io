@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://dobriak.github.io/post/service-account-restricted-environment/</loc>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/post/run-adhoc-tasks-dcos/</loc>
     <lastmod>2018-01-28T20:46:39-07:00</lastmod>
   </url>
@@ -80,7 +85,7 @@
   
   <url>
     <loc>https://dobriak.github.io/categories/automation/</loc>
-    <lastmod>2017-10-28T13:29:29-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -92,7 +97,7 @@
   
   <url>
     <loc>https://dobriak.github.io/categories/</loc>
-    <lastmod>2017-10-28T13:29:29-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -122,7 +127,7 @@
   
   <url>
     <loc>https://dobriak.github.io/tags/dcos/</loc>
-    <lastmod>2018-01-28T20:46:39-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -169,6 +174,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/jwt/</loc>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/kafka/</loc>
     <lastmod>2018-01-27T12:34:45-07:00</lastmod>
     <priority>0</priority>
@@ -211,6 +222,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/openssl/</loc>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/openvpn/</loc>
     <lastmod>2018-01-25T17:56:03-07:00</lastmod>
     <priority>0</priority>
@@ -230,7 +247,7 @@
   
   <url>
     <loc>https://dobriak.github.io/post/</loc>
-    <lastmod>2018-01-28T20:46:39-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -247,6 +264,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/tags/restricted-environment/</loc>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/scripting/</loc>
     <lastmod>2017-10-28T13:29:29-07:00</lastmod>
     <priority>0</priority>
@@ -259,6 +282,12 @@
   </url>
   
   <url>
+    <loc>https://dobriak.github.io/categories/security/</loc>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://dobriak.github.io/tags/security/</loc>
     <lastmod>2018-01-27T12:34:45-07:00</lastmod>
     <priority>0</priority>
@@ -266,7 +295,7 @@
   
   <url>
     <loc>https://dobriak.github.io/tags/service-account/</loc>
-    <lastmod>2018-01-27T12:34:45-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -326,7 +355,7 @@
   
   <url>
     <loc>https://dobriak.github.io/</loc>
-    <lastmod>2018-01-28T20:46:39-07:00</lastmod>
+    <lastmod>2018-04-29T15:44:45-07:00</lastmod>
     <priority>0</priority>
   </url>
   
