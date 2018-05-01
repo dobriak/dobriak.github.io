@@ -6,7 +6,7 @@
     <description>Recent content in Categories on dobriak::blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 29 Apr 2018 15:44:45 -0700</lastBuildDate>
+    <lastBuildDate>Mon, 30 Apr 2018 09:39:03 -0700</lastBuildDate>
     
 	<atom:link href="https://dobriak.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,7 +14,7 @@
     <item>
       <title>Automation</title>
       <link>https://dobriak.github.io/categories/automation/</link>
-      <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
       
       <guid>https://dobriak.github.io/categories/automation/</guid>
       <description></description>
@@ -44,6 +44,15 @@
       <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
       
       <guid>https://dobriak.github.io/categories/distributed-computing/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>https://dobriak.github.io/categories/monitoring/</link>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/categories/monitoring/</guid>
       <description></description>
     </item>
     

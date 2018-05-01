@@ -6,10 +6,23 @@
     <description>Recent content in Posts on dobriak::blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 29 Apr 2018 15:44:45 -0700</lastBuildDate>
+    <lastBuildDate>Mon, 30 Apr 2018 09:39:03 -0700</lastBuildDate>
     
 	<atom:link href="https://dobriak.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Autoscaling Reporter</title>
+      <link>https://dobriak.github.io/post/autoscaling-reporter/</link>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/autoscaling-reporter/</guid>
+      <description>&lt;p&gt;I frequently get asked about utilizing AWS CloudWatch metrics collecting abilities to autoscale DC/OS EE clusters. Usually people figure out quickly how to use the AWS built in metrics (for example CPU utilization) but are not completely sure how they can start emitting their own, custom ones and use those instead.&lt;/p&gt;
+
+&lt;p&gt;In this article, I will help you set up a simple Marathon app that will do just that for us: forward some DC/OS built-in metrics and even create and push a custom one.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>DC/OS Service Accounts in Restricted Environments</title>

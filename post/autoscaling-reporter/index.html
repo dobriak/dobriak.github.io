@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Autoscaling Reporter - dobriak::blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Software defined data center blog.">
+  <meta name="author" content="Julian Neytchev">
+  <meta name="keywords" content="dobriak, mesos, dcos, cloud, hyperconvergence, hyper-convergence, data center, software defined, utilization, automation">
+  <link rel="canonical" href="https://dobriak.github.io/post/autoscaling-reporter/">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  <link rel="stylesheet" type="text/css" href="https://dobriak.github.io/css/combined-min.css">
+
+</head>
+<body class="">
+
+<div class="site-wrap">
+  <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="https://dobriak.github.io" class="site-title">dobriak::blog</a>
+      <nav class="site-nav right">
+      <a href="https://dobriak.github.io/about/">About</a>
+<a href="https://dobriak.github.io/tags">Tags</a>
+<a href="https://dobriak.github.io/contact/">Contact</a>
+
+</form>
+
+      </nav>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</header>
+
+  <div class="post p2 p-responsive wrap" role="main">
+    <div class="measure">
+      <div class="post-header mb2">
+        <h1 class="py2">Autoscaling Reporter</h1>
+        <span class="post-meta">Apr 30, 2018 by Julian Neytchev</span><br>
+        
+      </div>
+
+      <article class="post-content">
+      <p>I frequently get asked about utilizing AWS CloudWatch metrics collecting abilities to autoscale DC/OS EE clusters. Usually people figure out quickly how to use the AWS built in metrics (for example CPU utilization) but are not completely sure how they can start emitting their own, custom ones and use those instead.</p>
+
+<p>In this article, I will help you set up a simple Marathon app that will do just that for us: forward some DC/OS built-in metrics and even create and push a custom one.</p>
+
+<p></p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>DC/OS Enterprise Edition version 1.11.x or later</li>
+<li>Machine with DC/OS CLI installed and configured</li>
+<li>Access to AWS CloudWatch console and enough permissions to view and interact with the metrics.</li>
+</ul>
+
+<p>Let&rsquo;s start with creating a service account that will be used to interact with the AWS CLI.</p>
+
+<pre><code class="language-bash">SERVICE_PRINCIPAL=&quot;reporter&quot;
+dcos package install --cli dcos-enterprise-cli --yes
+curl -k -v $(dcos config show core.dcos_url)/ca/dcos-ca.crt -o dcos-ca.crt
+dcos security org service-accounts keypair ${SERVICE_PRINCIPAL}-priv.pem ${SERVICE_PRINCIPAL}-pub.pem
+chmod 400 ${SERVICE_PRINCIPAL}-pub.pem
+dcos security org service-accounts create -p ${SERVICE_PRINCIPAL}-pub.pem -d &quot;DCOS service account for external integration&quot; ${SERVICE_PRINCIPAL}
+dcos security org service-accounts show ${SERVICE_PRINCIPAL}
+dcos security secrets create-sa-secret ${SERVICE_PRINCIPAL}-priv.pem ${SERVICE_PRINCIPAL} pk_${SERVICE_PRINCIPAL}
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:ops:mesos full
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:ops:slave full
+dcos security org users grant ${SERVICE_PRINCIPAL} dcos:adminrouter:ops:system-metrics full
+
+</code></pre>
+
+<p>Add your AWS credentials as secrets in DC/OS</p>
+
+<pre><code class="language-bash">dcos security secrets create -v &lt;Key ID&gt; AWS_ACCESS_KEY_ID
+dcos security secrets create -v &lt;Secret&gt; AWS_SECRET_ACCESS_KEY
+dcos security secrets create -v &lt;Region&gt; AWS_DEFAULT_REGION
+</code></pre>
+
+<p>You can now run the following Marathon app that will start reporting to AWS CloudWatch:</p>
+
+<pre><code class="language-bash">echo '{
+  &quot;id&quot;: &quot;/monitoring/awsrep&quot;,
+  &quot;backoffFactor&quot;: 1.15,
+  &quot;backoffSeconds&quot;: 1,
+  &quot;container&quot;: {
+    &quot;type&quot;: &quot;DOCKER&quot;,
+    &quot;volumes&quot;: [],
+    &quot;docker&quot;: {
+      &quot;image&quot;: &quot;dobriak/aws-rep:0.0.4&quot;,
+      &quot;forcePullImage&quot;: false,
+      &quot;privileged&quot;: false,
+      &quot;parameters&quot;: []
+    }
+  },
+  &quot;cpus&quot;: 0.4,
+  &quot;disk&quot;: 0,
+  &quot;env&quot;: {
+    &quot;SA_SECRET&quot;: {
+      &quot;secret&quot;: &quot;secret0&quot;
+    },
+    &quot;AWS_ACCESS_KEY_ID&quot;: {
+      &quot;secret&quot;: &quot;secret1&quot;
+    },
+    &quot;AWS_DEFAULT_REGION&quot;: {
+      &quot;secret&quot;: &quot;secret2&quot;
+    },
+    &quot;AWS_SECRET_ACCESS_KEY&quot;: {
+      &quot;secret&quot;: &quot;secret3&quot;
+    },
+    &quot;SA_NAME&quot;: &quot;reporter&quot;
+  },
+  &quot;instances&quot;: 1,
+  &quot;maxLaunchDelaySeconds&quot;: 3600,
+  &quot;mem&quot;: 128,
+  &quot;gpus&quot;: 0,
+  &quot;networks&quot;: [
+    {
+      &quot;mode&quot;: &quot;host&quot;
+    }
+  ],
+  &quot;portDefinitions&quot;: [],
+  &quot;requirePorts&quot;: false,
+  &quot;secrets&quot;: {
+    &quot;secret0&quot;: {
+      &quot;source&quot;: &quot;pk_reporter&quot;
+    },
+    &quot;secret1&quot;: {
+      &quot;source&quot;: &quot;AWS_ACCESS_KEY_ID&quot;
+    },
+    &quot;secret2&quot;: {
+      &quot;source&quot;: &quot;AWS_DEFAULT_REGION&quot;
+    },
+    &quot;secret3&quot;: {
+      &quot;source&quot;: &quot;AWS_SECRET_ACCESS_KEY&quot;
+    }
+  },
+  &quot;upgradeStrategy&quot;: {
+    &quot;maximumOverCapacity&quot;: 1,
+    &quot;minimumHealthCapacity&quot;: 1
+  },
+  &quot;killSelection&quot;: &quot;YOUNGEST_FIRST&quot;,
+  &quot;unreachableStrategy&quot;: {
+    &quot;inactiveAfterSeconds&quot;: 0,
+    &quot;expungeAfterSeconds&quot;: 0
+  },
+  &quot;healthChecks&quot;: [],
+  &quot;fetch&quot;: [],
+  &quot;constraints&quot;: []
+}' &gt; awsrep.json
+
+dcos marathon app add awsrep.json
+</code></pre>
+
+<p>If everything works as expected, you should be able to find the custom metrics in AWS CloudWatch, under the <code>Dcos</code> namespace:</p>
+
+<p><img src="https://dobriak.github.io/images/metrics-dcos.png" alt="CloudWatchDcos" /></p>
+
+<p>Under the <code>Dcos</code> namespace you will find our only dimension - <code>InstanceId</code>:</p>
+
+<p><img src="https://dobriak.github.io/images/metrics-instanceid.png" alt="CloudWatchDimension" /></p>
+
+<p>Each instance will have 4 metrics that can be used to set up alarms for your auto scaling group(s):</p>
+
+<p><img src="https://dobriak.github.io/images/instanceids.png" alt="CloudWatchMetrics" /></p>
+
+<p>On hints how to use the above metrics and for all source code, please visit my <a href="https://github.com/dobriak/aws-dcos-reporter">repository</a>.</p>
+      </article>
+
+      <p class="post-meta">Tags:&nbsp;
+        
+            
+            <a href="https://dobriak.github.io/tags/dcos">dcos</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/service-account">service-account</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/AWS">AWS</a>
+        
+            ,&nbsp;
+            <a href="https://dobriak.github.io/tags/CloudWatch">CloudWatch</a>
+        
+      </p>
+
+      
+
+    </div>
+  </div>
+</div>
+    <footer class="footer">
+      <div class="p2 wrap">
+        <div class="measure mt1 center">
+      <nav class="social-icons icons">
+<a class="fa fa-rss rss" href="https://dobriak.github.io/index.xml"></a>
+
+</nav>
+
+          <small>
+            Copyright &#169; Julian Neytchev 2017<br>
+            Powered by <a href="http://gohugo.io/" target="_blank">Hugo</a> &amp; <a href="https://github.com/azmelanar/hugo-theme-pixyll" target="_blank">Pixyll</a>
+          </small>
+        </div>
+      </div>
+    </footer>
+
+    
+    <script src="https://dobriak.github.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    
+    
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-97986528-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>
+

@@ -7,12 +7,25 @@
     <language>en-us</language>
     
     
-    <updated>Sun, 29 Apr 2018 15:44:45 MST</updated>
+    <updated>Mon, 30 Apr 2018 09:39:03 -0700</updated>
+    
+    <item>
+      <title>Autoscaling Reporter</title>
+      <link>https://dobriak.github.io/post/autoscaling-reporter/</link>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/post/autoscaling-reporter/</guid>
+      <description>&lt;p&gt;I frequently get asked about utilizing AWS CloudWatch metrics collecting abilities to autoscale DC/OS EE clusters. Usually people figure out quickly how to use the AWS built in metrics (for example CPU utilization) but are not completely sure how they can start emitting their own, custom ones and use those instead.&lt;/p&gt;
+
+&lt;p&gt;In this article, I will help you set up a simple Marathon app that will do just that for us: forward some DC/OS built-in metrics and even create and push a custom one.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>DC/OS Service Accounts in Restricted Environments</title>
       <link>https://dobriak.github.io/post/service-account-restricted-environment/</link>
-      <pubDate>Sun, 29 Apr 2018 15:44:45 MST</pubDate>
+      <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/service-account-restricted-environment/</guid>
       <description>&lt;p&gt;We are so used to having handy little pieces of software that help us do our jobs better. If you too work in the DevOps world and write automation for infrastructure or software (or pretty much anything else) you would know what I mean. Take &lt;code&gt;jq&lt;/code&gt; for an example: can you imagine writing any sort of shell script that interacts with any JSON producing API and &lt;em&gt;NOT&lt;/em&gt; using good ole trustworthy &lt;code&gt;jq&lt;/code&gt;?&lt;/p&gt;
@@ -54,7 +67,7 @@
     <item>
       <title>Install Kubernetes on DC/OS (beta)</title>
       <link>https://dobriak.github.io/post/kubernetes-dcos-beta/</link>
-      <pubDate>Sat, 28 Oct 2017 18:13:41 MST</pubDate>
+      <pubDate>Sat, 28 Oct 2017 18:13:41 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/kubernetes-dcos-beta/</guid>
       <description>&lt;p&gt;My &lt;a href=&#34;https://mesosphere.com/&#34;&gt;employer&lt;/a&gt; recently &lt;a href=&#34;https://mesosphere.com/blog/dcos-1_10-kubernetes/&#34;&gt;announced&lt;/a&gt; first class support for running Kubernetes on top of DC/OS version 1.10. In this post we will examine how to get started with using Kubernetes on DC/OS.&lt;/p&gt;
@@ -65,7 +78,7 @@
     <item>
       <title>DC/OS on KVM CoreOS VMs</title>
       <link>https://dobriak.github.io/post/kvm-coreos-dcos/</link>
-      <pubDate>Sat, 28 Oct 2017 13:29:29 MST</pubDate>
+      <pubDate>Sat, 28 Oct 2017 13:29:29 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/kvm-coreos-dcos/</guid>
       <description>&lt;p&gt;In this article we will automate the DC/OS installation procedure specifically for CoreOS VMs running on KVM (libvirt).&lt;/p&gt;
@@ -76,7 +89,7 @@
     <item>
       <title>Getting Started with Apache Cassandra On DC/OS</title>
       <link>https://dobriak.github.io/post/apache-cassandra-on-dcos/</link>
-      <pubDate>Fri, 28 Jul 2017 08:09:49 MST</pubDate>
+      <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/apache-cassandra-on-dcos/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://cassandra.apache.org/&#34;&gt;Apache Cassandra&lt;/a&gt; is a distributed, structured storage system. Cassandra clusters are highly available, scalable, performant, and fault tolerant. DC/OS allows you to quickly configure, install, and manage Apache Cassandra clusters, so you can offer Cassandra as a managed service to your organization.&lt;/p&gt;
@@ -87,7 +100,7 @@
     <item>
       <title>IP per Container with Calico CNI on DC/OS</title>
       <link>https://dobriak.github.io/post/using-calico-on-dcos/</link>
-      <pubDate>Tue, 18 Jul 2017 22:00:33 MST</pubDate>
+      <pubDate>Tue, 18 Jul 2017 22:00:33 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/using-calico-on-dcos/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.projectcalico.org//&#34;&gt;Project Calico&lt;/a&gt; is a Layer 3 software defined network that runs well on &lt;a href=&#34;http://docs.projectcalico.org/v2.3/getting-started/mesos/&#34;&gt;DC/OS and Mesos&lt;/a&gt;. In this blog post we will walk through installing and configuring it on DC/OS 1.9. That will allow us to attach containers to Calico and receive unique IPs for them. We will also examine the security implications and policies that can be applied.&lt;/p&gt;
@@ -98,7 +111,7 @@
     <item>
       <title>Compiling Local DC/OS Universe</title>
       <link>https://dobriak.github.io/post/compiling-local-universe/</link>
-      <pubDate>Sat, 27 May 2017 00:51:14 MST</pubDate>
+      <pubDate>Sat, 27 May 2017 00:51:14 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/compiling-local-universe/</guid>
       <description>&lt;p&gt;DC/OS offers its users the ability to install various frameworks with a single click from a central publicly hosted package repository called Universe.&lt;/p&gt;
@@ -113,7 +126,7 @@
     <item>
       <title>Automating advanced DC/OS installation.</title>
       <link>https://dobriak.github.io/post/automated-advanced-dcos-installation/</link>
-      <pubDate>Thu, 27 Apr 2017 20:23:50 MST</pubDate>
+      <pubDate>Thu, 27 Apr 2017 20:23:50 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/automated-advanced-dcos-installation/</guid>
       <description>&lt;p&gt;In this article we will look at automating the advanced DC/OS installation procedure. We will break down the requirements and look for opportunities to speed up the lengthy installation.&lt;/p&gt;
@@ -124,7 +137,7 @@
     <item>
       <title>Using Jenkins with a private Docker registry on DC/OS</title>
       <link>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</link>
-      <pubDate>Tue, 25 Apr 2017 22:05:07 MST</pubDate>
+      <pubDate>Tue, 25 Apr 2017 22:05:07 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/jenkins-marathonlb-dcos/</guid>
       <description>&lt;p&gt;In this guide I will walk you through setting up your Jenkins instance to use the private docker registry we set up in the previous blog post.&lt;/p&gt;
@@ -135,7 +148,7 @@
     <item>
       <title>Secure private Docker registry on DC/OS</title>
       <link>https://dobriak.github.io/post/docker-registry-marathonlb-dcos/</link>
-      <pubDate>Mon, 24 Apr 2017 16:45:12 MST</pubDate>
+      <pubDate>Mon, 24 Apr 2017 16:45:12 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/docker-registry-marathonlb-dcos/</guid>
       <description>&lt;p&gt;This is a short guide on how to set up a private docker registry behind an internal marathon-lb instance all running on DC/OS. Since marathon-lb is a Layer 7 load balancer we will use it to terminate SSL for our private registry and avoid using it in insecure mode. We will use self-signed TLS certificates for that purpose.&lt;/p&gt;
@@ -146,7 +159,7 @@
     <item>
       <title>Contact</title>
       <link>https://dobriak.github.io/contact/</link>
-      <pubDate>Mon, 24 Apr 2017 16:44:40 MST</pubDate>
+      <pubDate>Mon, 24 Apr 2017 16:44:40 -0700</pubDate>
       
       <guid>https://dobriak.github.io/contact/</guid>
       <description>If you need to get in touch with me, feel free to do it through LinkedIn or AngelCo</description>
@@ -155,7 +168,7 @@
     <item>
       <title>About</title>
       <link>https://dobriak.github.io/about/</link>
-      <pubDate>Mon, 24 Apr 2017 16:44:33 MST</pubDate>
+      <pubDate>Mon, 24 Apr 2017 16:44:33 -0700</pubDate>
       
       <guid>https://dobriak.github.io/about/</guid>
       <description>Hello, my name is Julian Neytchev, and I have been making sure to turn it off and on again since 1995.

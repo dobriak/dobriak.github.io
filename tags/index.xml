@@ -30,11 +30,29 @@
     </item>
     
     <item>
+      <title>Aws</title>
+      <link>https://dobriak.github.io/tags/aws/</link>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/aws/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Cassandra</title>
       <link>https://dobriak.github.io/tags/cassandra/</link>
       <pubDate>Fri, 28 Jul 2017 08:09:49 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/cassandra/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Cloudwatch</title>
+      <link>https://dobriak.github.io/tags/cloudwatch/</link>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
+      
+      <guid>https://dobriak.github.io/tags/cloudwatch/</guid>
       <description></description>
     </item>
     
@@ -68,7 +86,7 @@
     <item>
       <title>Dcos</title>
       <link>https://dobriak.github.io/tags/dcos/</link>
-      <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/dcos/</guid>
       <description></description>
@@ -266,7 +284,7 @@
     <item>
       <title>Service Account</title>
       <link>https://dobriak.github.io/tags/service-account/</link>
-      <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
+      <pubDate>Mon, 30 Apr 2018 09:39:03 -0700</pubDate>
       
       <guid>https://dobriak.github.io/tags/service-account/</guid>
       <description></description>
