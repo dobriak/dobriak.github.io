@@ -28,7 +28,7 @@
       <pubDate>Sun, 29 Apr 2018 15:44:45 -0700</pubDate>
       
       <guid>https://dobriak.github.io/post/service-account-restricted-environment/</guid>
-      <description>&lt;p&gt;We are so used to having handy little pieces of software that help us do our jobs better. If you too work in the DevOps world and write automation for infrastructure or software (or pretty much anything else) you would know what I mean. Take &lt;code&gt;jq&lt;/code&gt; for an example: can you imagine writing any sort of shell script that interacts with any JSON producing API and &lt;em&gt;NOT&lt;/em&gt; using good ole trustworthy &lt;code&gt;jq&lt;/code&gt;?&lt;/p&gt;
+      <description>&lt;p&gt;We are so used to having handy little pieces of software that help us do our jobs better. If you too work in the DevOps world and write automation for infrastructure or software (or pretty much anything else) you know what I mean. Take &lt;code&gt;jq&lt;/code&gt; for an example: can you imagine writing any sort of shell script that interacts with any JSON producing API and &lt;em&gt;NOT&lt;/em&gt; using good ole trustworthy &lt;code&gt;jq&lt;/code&gt;?&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>
